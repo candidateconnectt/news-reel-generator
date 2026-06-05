@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>APEX — Formula 1</title>
+<style>
+  /* ---------- Reset & Base ---------- */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  :root{
+    --bg:#0a0a0f;
+    --bg-2:#11111a;
+    --bg-3:#181826;
+    --line:#23233a;
+    --text:#f5f5f7;
+    --muted:#8a8aa3;
+    --red:#e10600;
+    --red-2:#ff2a1f;
+    --accent:#00d2be;
+    --gold:#ffd700;
+    --silver:#c0c0c0;
+    --bronze:#cd7f32;
+  }
+  body{
+    font-family:'Inter','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(225,6,0,0.12), transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(0,210,190,0.06), transparent 40%);
+  }
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--red);color:#fff}
+
+  /* ---------- Scrollbar ---------- */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-2)}
+  ::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:8px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--red)}
+
+  /* ---------- Top Ticker ---------- */
+  .ticker{
+    background:#000;
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+    position:relative;
+    height:36px;
+    display:flex;align-items:center;
+  }
+  .ticker__label{
+    background:var(--red);
+    color:#fff;
+    font-weight:800;
+    font-size:11px;
+    letter-spacing:2px;
+    padding:0 14px;
+    height:100%;
+    display:flex;align-items:center;
+    z-index:2;
+    position:relative;
+  }
+  .ticker__track{
+    display:flex;
+    gap:60px;
+    white-space:nowrap;
+    padding-left:30px;
+    animation:tick 50s linear infinite;
+  }
+  .ticker__item{font-size:13px;color:#cfcfdb}
+  .ticker__item strong{color:var(--red-2);margin-right:8px}
+  @keyframes tick{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+  }
+
+  /* ---------- Header / Nav ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(10,10,15,0.78);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    max-width:1400px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+  }
+  .logo{
+    display:flex;align-items:center;gap:10px;
+    font-weight:900;letter-spacing:2px;font-size:22px;
+  }
+  .logo__mark{
+    width:36px;height:36px;
+    background:linear-gradient(135deg,var(--red) 0%, #8a0000 100%);
+    clip-path:polygon(20% 0,100% 0,80% 100%,0 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:14px;font-weight:900;
+    box-shadow:0 0 24px rgba(225,6,0,0.5);
+  }
+  .logo small{display:block;font-size:9px;letter-spacing:4px;color:var(--muted);font-weight:600;margin-top:-2px}
+  .nav__links{display:flex;gap:6px}
+  .nav__links a{
+    padding:8px 14px;border-radius:8px;
+    font-size:13px;font-weight:600;letter-spacing:1px;
+    color:#cfcfdb;transition:.2s;
+    text-transform:uppercase;
+  }
+  .nav__links a:hover{color:#fff;background:rgba(255,255,255,0.05)}
+  .nav__links a.active{color:#fff;background:var(--red)}
+  .nav__cta{
+    display:flex;align-items:center;gap:10px;
+  }
+  .live-dot{
+    display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:var(--red);
+    box-shadow:0 0 0 0 rgba(225,6,0,0.6);
+    animation:pulse 1.6s infinite;
+    margin-right:6px;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(225,6,0,0.6)}
+    70%{box-shadow:0 0 0 12px rgba(225,6,0,0)}
+    100%{box-shadow:0 0 0 0 rgba(225,6,0,0)}
+  }
+  .btn{
+    padding:10px 18px;border-radius:8px;
+    font-weight:700;font-size:13px;letter-spacing:1px;
+    text-transform:uppercase;
+    transition:transform .15s, box-shadow .2s, background .2s;
+  }
+  .btn--primary{background:var(--red);color:#fff;box-shadow:0 4px 18px rgba(225,6,0,0.4)}
+  .btn--primary:hover{background:var(--red-2);transform:translateY(-1px)}
+  .btn--ghost{border:1px solid var(--line);color:#fff}
+  .btn--ghost:hover{border-color:var(--red);background:rgba(225,6,0,0.08)}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative;
+    min-height:90vh;
+    overflow:hidden;
+    display:flex;align-items:center;
+    background:
+      linear-gradient(180deg, transparent 0%, rgba(10,10,15,0.6) 70%, var(--bg) 100%),
+      linear-gradient(90deg, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.4) 50%, transparent 100%),
+      radial-gradient(ellipse at right, #2a0810 0%, #0a0a0f 60%);
+  }
+  .hero::before{
+    content:"";
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:50px 50px;
+    pointer-events:none;
+  }
+  .hero__inner{
+    max-width:1400px;margin:0 auto;
+    padding:80px 28px 60px;
+    display:grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap:40px;
+    width:100%;
+    align-items:center;
+    position:relative;
+    z-index:2;
+  }
+  .hero__tag{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(225,6,0,0.12);
+    border:1px solid rgba(225,6,0,0.3);
+    color:#ff8a80;
+    padding:6px 14px;border-radius:50px;
+    font-size:12px;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:24px;
+  }
+  .hero__title{
+    font-size:clamp(48px, 7vw, 96px);
+    font-weight:900;line-height:0.95;
+    letter-spacing:-2px;
+    margin-bottom:20px;
+  }
+  .hero__title span{
+    background:linear-gradient(90deg, var(--red) 0%, #ff5e54 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero__sub{
+    font-size:18px;color:#bdbdd0;max-width:540px;margin-bottom:32px;
+  }
+  .hero__sub b{color:#fff}
+  .hero__cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px}
+  .hero__stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+    border-top:1px solid var(--line);
+    padding-top:32px;
+  }
+  .stat__num{
+    font-size:36px;font-weight:900;letter-spacing:-1px;color:#fff;
+    background:linear-gradient(180deg,#fff 0%, #888 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .stat__lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+
+  /* Countdown */
+  .countdown{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:28px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    position:relative;
+    overflow:hidden;
+  }
+  .countdown::before{
+    content:"";position:absolute;top:-50%;right:-30%;
+    width:300px;height:300px;
+    background:radial-gradient(circle, rgba(225,6,0,0.25), transparent 70%);
+    pointer-events:none;
+  }
+  .countdown__head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .countdown__title{font-size:12px;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+  .countdown__round{font-size:12px;background:var(--red);color:#fff;padding:3px 10px;border-radius:50px;font-weight:700;letter-spacing:1px}
+  .countdown__name{font-size:28px;font-weight:800;letter-spacing:-0.5px;margin:8px 0 4px}
+  .countdown__where{font-size:14px;color:#bdbdd0;margin-bottom:20px}
+  .countdown__where svg{vertical-align:middle;margin-right:6px}
+  .timer{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+  .timer__cell{
+    background:rgba(0,0,0,0.4);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 6px;
+    text-align:center;
+  }
+  .timer__n{font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px;display:block;line-height:1}
+  .timer__l{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:6px;display:block}
+  .countdown__bar{
+    height:6px;background:#000;border-radius:99px;overflow:hidden;margin-top:14px;
+  }
+  .countdown__bar div{
+    height:100%;
+    background:linear-gradient(90deg,var(--red) 0%,#ff5e54 100%);
+    width:42%;
+    box-shadow:0 0 12px rgba(225,6,0,0.6);
+  }
+  .countdown__bar-info{
+    display:flex;justify-content:space-between;
+    font-size:11px;color:var(--muted);
+    margin-top:8px;letter-spacing:1px;
+  }
+
+  /* ---------- Section base ---------- */
+  section{padding:80px 28px}
+  .container{max-width:1400px;margin:0 auto}
+  .sec-head{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    margin-bottom:36px;gap:20px;flex-wrap:wrap;
+  }
+  .sec-eyebrow{color:var(--red);font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+  .sec-title{font-size:42px;font-weight:900;letter-spacing:-1.5px;line-height:1}
+  .sec-sub{color:var(--muted);margin-top:10px;max-width:540px;font-size:15px}
+  .tabs{display:flex;gap:4px;background:var(--bg-2);padding:4px;border-radius:10px;border:1px solid var(--line)}
+  .tab{
+    padding:8px 16px;font-size:13px;font-weight:700;letter-spacing:1px;
+    color:#bdbdd0;border-radius:7px;text-transform:uppercase;
+    transition:.2s;
+  }
+  .tab:hover{color:#fff}
+  .tab.active{background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(225,6,0,0.3)}
+
+  /* ---------- Standings ---------- */
+  .standings-card{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .standings-row{
+    display:grid;
+    grid-template-columns:60px 1fr 90px 70px 90px 60px;
+    align-items:center;
+    padding:14px 20px;
+    border-bottom:1px solid var(--line);
+    transition:background .2s;
+    position:relative;
+  }
+  .standings-row:last-child{border-bottom:0}
+  .standings-row.head{
+    background:#000;color:var(--muted);
+    font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+    padding:14px 20px;
+  }
+  .standings-row:hover:not(.head){background:rgba(255,255,255,0.02)}
+  .pos{
+    font-size:24px;font-weight:900;letter-spacing:-1px;color:#fff;
+    display:flex;align-items:center;gap:6px;
+  }
+  .pos.gold{color:var(--gold)}
+  .pos.silver{color:var(--silver)}
+  .pos.bronze{color:var(--bronze)}
+  .driver{display:flex;align-items:center;gap:14px}
+  .driver__avatar{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:14px;
+    color:#fff;
+    flex-shrink:0;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,0.15);
+  }
+  .driver__name{font-weight:700;font-size:15px}
+  .driver__team{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+  .team-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .pts{font-size:18px;font-weight:900;color:#fff}
+  .pts-label{font-size:10px;color:var(--muted);letter-spacing:2px;display:block;margin-top:-2px}
+  .delta{font-size:13px;font-weight:700;text-align:right;display:flex;justify-content:flex-end;align-items:center;gap:4px}
+  .delta.up{color:#00d68f}
+  .delta.down{color:#ff5252}
+  .delta.flat{color:var(--muted)}
+  .num-cell{font-weight:800;font-size:15px;text-align:right}
+  .num-cell small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px;margin-top:2px}
+
+  /* Constructor table */
+  .standings-row.ctor{
+    grid-template-columns:60px 1fr 110px 110px 110px 60px;
+  }
+  .ctor__bar{
+    height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;
+  }
+  .ctor__bar div{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red) 0%,#ff5e54 100%)}
+
+  /* ---------- Calendar ---------- */
+  .calendar{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:16px;
+  }
+  .race{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    transition:transform .2s, border-color .2s, box-shadow .2s;
+    position:relative;overflow:hidden;
+    cursor:pointer;
+  }
+  .race::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:var(--team-color, var(--red));
+  }
+  .race:hover{
+    transform:translateY(-4px);
+    border-color:#3a3a55;
+    box-shadow:0 16px 40px rgba(0,0,0,0.4);
+  }
+  .race.next{
+    background:linear-gradient(180deg, #1a0a10 0%, var(--bg-3) 100%);
+    border-color:rgba(225,6,0,0.4);
+  }
+  .race.next::after{
+    content:"NEXT";
+    position:absolute;top:14px;right:14px;
+    background:var(--red);color:#fff;
+    font-size:10px;font-weight:800;letter-spacing:2px;
+    padding:3px 8px;border-radius:4px;
+  }
+  .race__round{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;font-weight:700}
+  .race__name{font-size:18px;font-weight:800;letter-spacing:-0.3px;margin:6px 0 4px}
+  .race__circuit{font-size:13px;color:#bdbdd0;margin-bottom:14px}
+  .race__date{
+    display:flex;align-items:center;gap:8px;
+    font-size:12px;color:var(--muted);
+    border-top:1px solid var(--line);padding-top:12px;
+  }
+  .race__date strong{color:#fff;font-size:14px}
+  .race__winner{font-size:11px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}
+  .race__winner b{color:#fff;font-weight:700}
+  .race__sessions{display:flex;gap:6px;margin-top:10px}
+  .race__chip{
+    font-size:10px;letter-spacing:1px;padding:2px 6px;
+    border:1px solid var(--line);border-radius:4px;color:#bdbdd0;
+    text-transform:uppercase;
+  }
+  .race__chip.sprint{background:var(--red);color:#fff;border-color:var(--red)}
+
+  /* ---------- Track map ---------- */
+  .track-wrap{
+    margin-top:14px;background:#000;border-radius:8px;padding:10px;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    height:80px;
+  }
+  .track-wrap svg{width:100%;height:100%}
+
+  /* ---------- News ---------- */
+  .news{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:18px;
+  }
+  .news-card{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    transition:transform .2s, border-color .2s;
+    cursor:pointer;
+  }
+  .news-card:hover{transform:translateY(-4px);border-color:#3a3a55}
+  .news__img{
+    height:180px;
+    background-size:cover;background-position:center;
+    position:relative;
+  }
+  .news__img::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6) 100%);
+  }
+  .news__cat{
+    position:absolute;top:14px;left:14px;z-index:2;
+    background:var(--red);color:#fff;
+    font-size:10px;font-weight:800;letter-spacing:2px;
+    padding:4px 10px;border-radius:4px;text-transform:uppercase;
+  }
+  .news__body{padding:18px}
+  .news__date{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+  .news__title{font-size:18px;font-weight:800;line-height:1.3;margin-bottom:8px;letter-spacing:-0.3px}
+  .news__excerpt{font-size:13px;color:#bdbdd0;line-height:1.55}
+  .news__read{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:14px;font-size:12px;color:var(--red);font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;
+  }
+
+  /* ---------- Driver comparison ---------- */
+  .compare{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);
+    border-radius:16px;padding:30px;
+  }
+  .compare__top{
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:30px;
+    margin-bottom:30px;
+  }
+  .compare__driver{text-align:center}
+  .compare__driver h4{font-size:18px;font-weight:800;margin-top:12px}
+  .compare__driver p{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+  .compare__big{font-size:60px;font-weight:900;letter-spacing:-2px}
+  .compare__vs{font-size:24px;color:var(--red);font-weight:900;letter-spacing:2px}
+  .compare__row{
+    display:grid;grid-template-columns:60px 1fr 1fr;align-items:center;gap:14px;
+    padding:14px 0;border-top:1px solid var(--line);
+  }
+  .compare__row:first-of-type{border-top:0}
+  .compare__lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;font-weight:700}
+  .bar-a,.bar-b{position:relative;height:8px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden}
+  .bar-a div,.bar-b div{position:absolute;top:0;left:0;height:100%;border-radius:99px}
+  .bar-a div{background:linear-gradient(90deg,#3671C6 0%, #5a8fd6 100%)}
+  .bar-b div{background:linear-gradient(90deg,#e10600 0%, #ff5e54 100%)}
+  .bar-a span,.bar-b span{position:absolute;right:0;top:14px;font-size:13px;font-weight:800;color:#fff}
+
+  /* ---------- Footer ---------- */
+  footer{
+    background:#000;border-top:1px solid var(--line);
+    padding:50px 28px 30px;
+  }
+  .footer__grid{
+    max-width:1400px;margin:0 auto;
+    display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:40px;
+    margin-bottom:40px;
+  }
+  .footer__col h5{
+    font-size:12px;color:#fff;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;font-weight:800;
+  }
+  .footer__col a{
+    display:block;color:#8a8aa3;font-size:13px;padding:5px 0;
+    transition:color .2s;
+  }
+  .footer__col a:hover{color:var(--red)}
+  .footer__about p{color:#8a8aa3;font-size:13px;line-height:1.6;margin:12px 0}
+  .footer__social{display:flex;gap:8px;margin-top:8px}
+  .footer__social a{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--bg-3);display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);
+  }
+  .footer__social a:hover{background:var(--red);border-color:var(--red)}
+  .footer__bottom{
+    max-width:1400px;margin:0 auto;
+    border-top:1px solid var(--line);padding-top:24px;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:10px;
+    color:#56566e;font-size:12px;letter-spacing:1px;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal{
+    position:fixed;inset:0;background:rgba(0,0,0,0.85);
+    display:none;align-items:center;justify-content:center;z-index:100;
+    padding:20px;
+    backdrop-filter:blur(8px);
+  }
+  .modal.open{display:flex}
+  .modal__box{
+    background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border:1px solid var(--line);border-radius:16px;
+    max-width:600px;width:100%;padding:32px;
+    position:relative;
+    animation:pop .25s ease-out;
+  }
+  @keyframes pop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal__close{position:absolute;top:14px;right:14px;font-size:22px;color:var(--muted);padding:4px 10px;border-radius:6px}
+  .modal__close:hover{background:rgba(255,255,255,0.05);color:#fff}
+  .modal__title{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+  .modal__meta{color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+
+  /* =========================================================
+     PREMIUM ANIMATIONS
+     ========================================================= */
+
+  /* Loader screen */
+  .loader{
+    position:fixed;inset:0;z-index:9999;
+    background:#000;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:opacity .7s cubic-bezier(.4,0,.2,1), visibility .7s;
+  }
+  .loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .loader__brand{font-size:26px;font-weight:900;letter-spacing:8px;color:#fff}
+  .loader__brand span{color:var(--red);display:inline-block;animation:loaderPulse 1.2s ease-in-out infinite}
+  .loader__sub{font-size:10px;color:#666;letter-spacing:5px;margin-top:6px;font-weight:700}
+  .loader__bar{width:260px;height:2px;background:#1a1a2a;border-radius:99px;overflow:hidden;margin-top:28px;position:relative}
+  .loader__bar div{
+    height:100%;background:linear-gradient(90deg,var(--red),#ff5e54,#ff8a80);
+    width:0;transition:width .25s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 0 12px var(--red);
+  }
+  .loader__pct{font-size:11px;color:#888;letter-spacing:3px;margin-top:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  @keyframes loaderPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.7}}
+
+  /* 3D canvas container */
+  .hero__3d{
+    position:absolute;inset:0;z-index:1;pointer-events:none;
+  }
+  .hero__3d canvas{display:block;width:100%!important;height:100%!important}
+  .hero__3d::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:
+      linear-gradient(90deg,var(--bg) 0%, rgba(10,10,15,.85) 25%, rgba(10,10,15,.15) 55%, transparent 75%),
+      linear-gradient(180deg, transparent 0%, transparent 70%, var(--bg) 100%);
+  }
+  .hero__3d::after{
+    content:"DRAG TO ROTATE";position:absolute;right:30px;bottom:30px;z-index:3;
+    font-size:9px;color:var(--muted);letter-spacing:3px;font-weight:700;
+    opacity:0;animation:fadeHint 4s ease 2.5s forwards;
+  }
+  @keyframes fadeHint{to{opacity:.5}}
+
+  /* Scroll reveal animations */
+  [data-reveal]{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
+  [data-reveal].in{opacity:1;transform:translateY(0)}
+  [data-reveal="3d"]{opacity:0;transform:perspective(1200px) rotateX(12deg) translateY(40px) scale(.98);transform-origin:center top;transition:opacity .9s, transform .9s cubic-bezier(.2,.8,.2,1)}
+  [data-reveal="3d"].in{opacity:1;transform:perspective(1200px) rotateX(0) translateY(0) scale(1)}
+  [data-reveal="left"]{opacity:0;transform:translateX(-60px);transition:opacity .8s, transform .8s cubic-bezier(.2,.8,.2,1)}
+  [data-reveal="left"].in{opacity:1;transform:translateX(0)}
+  [data-reveal="right"]{opacity:0;transform:translateX(60px);transition:opacity .8s, transform .8s cubic-bezier(.2,.8,.2,1)}
+  [data-reveal="right"].in{opacity:1;transform:translateX(0)}
+  [data-reveal="zoom"]{opacity:0;transform:scale(.92);transition:opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1)}
+  [data-reveal="zoom"].in{opacity:1;transform:scale(1)}
+
+  /* Stagger children (for grids) */
+  [data-stagger] > *{opacity:0;transform:translateY(24px) scale(.96);transition:opacity .6s, transform .6s cubic-bezier(.2,.8,.2,1)}
+  [data-stagger].in > *{opacity:1;transform:translateY(0) scale(1)}
+  [data-stagger].in > *:nth-child(1){transition-delay:.04s}
+  [data-stagger].in > *:nth-child(2){transition-delay:.09s}
+  [data-stagger].in > *:nth-child(3){transition-delay:.14s}
+  [data-stagger].in > *:nth-child(4){transition-delay:.19s}
+  [data-stagger].in > *:nth-child(5){transition-delay:.24s}
+  [data-stagger].in > *:nth-child(6){transition-delay:.29s}
+  [data-stagger].in > *:nth-child(7){transition-delay:.34s}
+  [data-stagger].in > *:nth-child(8){transition-delay:.39s}
+  [data-stagger].in > *:nth-child(9){transition-delay:.44s}
+  [data-stagger].in > *:nth-child(10){transition-delay:.49s}
+  [data-stagger].in > *:nth-child(11){transition-delay:.54s}
+  [data-stagger].in > *:nth-child(12){transition-delay:.59s}
+
+  /* 3D tilt on hover */
+  .tilt{transform-style:preserve-3d;will-change:transform;transition:transform .2s ease-out, box-shadow .25s ease}
+
+  /* Magnetic buttons */
+  .magnetic{transition:transform .25s cubic-bezier(.2,.8,.2,1);will-change:transform}
+
+  /* Animated grid background */
+  .anim-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+    background-image:
+      linear-gradient(rgba(225,6,0,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225,6,0,.05) 1px, transparent 1px);
+    background-size:60px 60px;
+    -webkit-mask-image:radial-gradient(ellipse at center, #000 0%, transparent 70%);
+    mask-image:radial-gradient(ellipse at center, #000 0%, transparent 70%);
+    animation:gridScroll 30s linear infinite;
+  }
+  @keyframes gridScroll{from{background-position:0 0}to{background-position:60px 60px}}
+
+  /* Floating light streaks */
+  .streak{position:fixed;width:1px;height:140px;
+    background:linear-gradient(180deg,transparent,var(--red),transparent);
+    filter:blur(1px);opacity:0;pointer-events:none;z-index:1;
+    animation:streakFall linear infinite;
+  }
+  @keyframes streakFall{
+    0%{transform:translateY(-30vh);opacity:0}
+    10%{opacity:.25}
+    90%{opacity:.25}
+    100%{transform:translateY(110vh);opacity:0}
+  }
+
+  /* News card shine sweep */
+  .shine{position:relative;overflow:hidden}
+  .shine::after{
+    content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+    transition:left .9s ease;pointer-events:none;
+  }
+  .shine:hover::after{left:120%}
+
+  /* Glitch text */
+  .glitch{position:relative;display:inline-block}
+  .glitch::before,.glitch::after{
+    content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;
+    pointer-events:none;
+  }
+  .glitch::before{
+    color:var(--red);z-index:-1;
+    animation:glitchA 5s infinite steps(1);
+    clip-path:polygon(0 0,100% 0,100% 38%,0 38%);
+    opacity:.8;
+  }
+  .glitch::after{
+    color:#00d2be;z-index:-2;
+    animation:glitchB 5s infinite steps(1);
+    clip-path:polygon(0 62%,100% 62%,100% 100%,0 100%);
+    opacity:.8;
+  }
+  @keyframes glitchA{0%,92%,100%{transform:translate(0)}93%{transform:translate(-5px,2px)}95%{transform:translate(5px,-2px)}97%{transform:translate(-3px,1px)}99%{transform:translate(3px,-1px)}}
+  @keyframes glitchB{0%,92%,100%{transform:translate(0)}93%{transform:translate(5px,-2px)}95%{transform:translate(-5px,2px)}97%{transform:translate(3px,-1px)}99%{transform:translate(-3px,1px)}}
+
+  /* Hover lift */
+  .lift{transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, border-color .3s ease}
+  .lift:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.5);border-color:#3a3a55!important}
+
+  /* Stronger live pulse */
+  .live-dot{animation:pulse2 1.6s infinite}
+  @keyframes pulse2{
+    0%{box-shadow:0 0 0 0 rgba(225,6,0,.7), 0 0 14px rgba(225,6,0,.5)}
+    70%{box-shadow:0 0 0 18px rgba(225,6,0,0), 0 0 14px rgba(225,6,0,.5)}
+    100%{box-shadow:0 0 0 0 rgba(225,6,0,0), 0 0 14px rgba(225,6,0,.5)}
+  }
+
+  /* Section title accent bar grows on scroll */
+  .sec-eyebrow{position:relative;display:inline-block}
+  .sec-eyebrow::after{
+    content:"";position:absolute;left:0;bottom:-6px;height:2px;width:0;
+    background:linear-gradient(90deg,var(--red),transparent);
+    transition:width 1.2s cubic-bezier(.2,.8,.2,1) .2s;
+  }
+  [data-reveal].in .sec-eyebrow::after{width:60px}
+
+  /* Responsive: hide heavy 3D on small screens */
+  @media (max-width: 980px){
+    .anim-grid{display:none}
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 980px){
+    .hero__inner{grid-template-columns:1fr;padding:60px 20px 40px}
+    .nav__links{display:none}
+    .footer__grid{grid-template-columns:1fr 1fr}
+    .standings-row,.standings-row.ctor{
+      grid-template-columns:50px 1fr 70px 60px;
+    }
+    .standings-row .num-cell.hide-sm,.standings-row.head .hide-sm{display:none}
+  }
+  @media (max-width: 600px){
+    section{padding:60px 18px}
+    .hero__stats{grid-template-columns:repeat(2,1fr);gap:18px}
+    .timer{grid-template-columns:repeat(4,1fr)}
+    .timer__n{font-size:22px}
+    .footer__grid{grid-template-columns:1fr}
+    .compare__top{grid-template-columns:1fr;gap:20px}
+    .compare__vs{order:0}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOADER ============ -->
+<div class="loader" id="loader">
+  <div class="loader__brand">AP<span>EX</span></div>
+  <div class="loader__sub">FORMULA 1</div>
+  <div class="loader__bar"><div></div></div>
+  <div class="loader__pct">0%</div>
+</div>
+
+<!-- ============ TICKER ============ -->
+<div class="ticker">
+  <div class="ticker__label">● LIVE</div>
+  <div class="ticker__track" id="tickerTrack"></div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <nav class="nav">
+    <a class="logo" href="#">
+      <div class="logo__mark">A</div>
+      <div>
+        APEX
+        <small>FORMULA 1</small>
+      </div>
+    </a>
+    <div class="nav__links">
+      <a href="#home" class="active">Home</a>
+      <a href="#standings">Standings</a>
+      <a href="#calendar">Calendar</a>
+      <a href="#news">News</a>
+      <a href="#compare">Compare</a>
+    </div>
+    <div class="nav__cta">
+      <button class="btn btn--ghost" onclick="openModal('signin')">Sign In</button>
+      <button class="btn btn--primary"><span class="live-dot"></span>Watch Live</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="home">
+  <div class="hero__3d"><canvas id="hero3d"></canvas></div>
+  <div class="hero__inner">
+    <div>
+      <div class="hero__tag">● 2026 SEASON · ROUND 9 OF 24</div>
+      <h1 class="hero__title">Feel the <span>Throttle</span>.<br/>Own the Apex.</h1>
+      <p class="hero__sub">The pinnacle of motorsport, in your pocket. Live timing, in-depth analysis, and unfiltered access to every <b>race weekend</b> on the calendar.</p>
+      <div class="hero__cta">
+        <button class="btn btn--primary">Get Full Access →</button>
+        <button class="btn btn--ghost" onclick="document.getElementById('calendar').scrollIntoView({behavior:'smooth'})">View Calendar</button>
+      </div>
+      <div class="hero__stats">
+        <div><div class="stat__num" data-count="24">0</div><div class="stat__lbl">Races</div></div>
+        <div><div class="stat__num" data-count="20">0</div><div class="stat__lbl">Drivers</div></div>
+        <div><div class="stat__num" data-count="10">0</div><div class="stat__lbl">Teams</div></div>
+        <div><div class="stat__num" data-count="340">0</div><div class="stat__lbl">Km/h Top</div></div>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="countdown">
+      <div class="countdown__head">
+        <div class="countdown__title">Next Race</div>
+        <div class="countdown__round">ROUND 9</div>
+      </div>
+      <div class="countdown__name">Monaco Grand Prix</div>
+      <div class="countdown__where">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Circuit de Monaco · Monte Carlo
+      </div>
+      <div class="timer">
+        <div class="timer__cell"><span class="timer__n" id="t-d">00</span><span class="timer__l">Days</span></div>
+        <div class="timer__cell"><span class="timer__n" id="t-h">00</span><span class="timer__l">Hours</span></div>
+        <div class="timer__cell"><span class="timer__n" id="t-m">00</span><span class="timer__l">Mins</span></div>
+        <div class="timer__cell"><span class="timer__n" id="t-s">00</span><span class="timer__l">Secs</span></div>
+      </div>
+      <div class="countdown__bar"><div></div></div>
+      <div class="countdown__bar-info">
+        <span>WEEKEND PROGRESS</span>
+        <span id="barInfo">42%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STANDINGS ============ -->
+<section id="standings">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">Championship</div>
+        <h2 class="sec-title">Standings</h2>
+        <p class="sec-sub">Updated after every session. Drivers' and Constructors' championships, refreshed live.</p>
+      </div>
+      <div class="tabs" id="standingsTabs">
+        <button class="tab active" data-tab="drivers">Drivers</button>
+        <button class="tab" data-tab="ctors">Constructors</button>
+      </div>
+    </div>
+
+    <!-- Drivers -->
+    <div id="driversPanel" class="standings-card">
+      <div class="standings-row head">
+        <div>POS</div>
+        <div>DRIVER</div>
+        <div class="num-cell">POINTS</div>
+        <div class="num-cell hide-sm">WINS</div>
+        <div class="num-cell hide-sm">PODIUMS</div>
+        <div class="num-cell">+/-</div>
+      </div>
+      <div id="driversBody"></div>
+    </div>
+
+    <!-- Constructors -->
+    <div id="ctorsPanel" class="standings-card" style="display:none">
+      <div class="standings-row ctor head">
+        <div>POS</div>
+        <div>TEAM</div>
+        <div class="num-cell">POINTS</div>
+        <div class="num-cell hide-sm">WINS</div>
+        <div class="num-cell hide-sm">PODIUMS</div>
+        <div class="num-cell">+/-</div>
+      </div>
+      <div id="ctorsBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CALENDAR ============ -->
+<section id="calendar" style="background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">2026 Season</div>
+        <h2 class="sec-title">Race Calendar</h2>
+        <p class="sec-sub">All 24 rounds of the 2026 FIA Formula One World Championship.</p>
+      </div>
+      <div class="tabs" id="calTabs">
+        <button class="tab active" data-season="2026">2026</button>
+        <button class="tab" data-season="2025">2025</button>
+      </div>
+    </div>
+    <div class="calendar" id="calendarBody"></div>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section id="compare">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">Head to Head</div>
+        <h2 class="sec-title">Driver Comparison</h2>
+        <p class="sec-sub">The eternal debate. Pick two and let the numbers do the talking.</p>
+      </div>
+    </div>
+    <div class="compare">
+      <div class="compare__top">
+        <div class="compare__driver">
+          <div id="cmpA-circle" class="driver__avatar" style="width:90px;height:90px;font-size:30px;margin:0 auto">VE</div>
+          <h4 id="cmpA-name">Max Verstappen</h4>
+          <p id="cmpA-team">Red Bull Racing</p>
+          <div class="compare__big" id="cmpA-pts" style="color:#3671C6">198</div>
+        </div>
+        <div class="compare__vs">VS</div>
+        <div class="compare__driver">
+          <div id="cmpB-circle" class="driver__avatar" style="width:90px;height:90px;font-size:30px;margin:0 auto;background:linear-gradient(135deg,#e10600,#8a0000)">LH</div>
+          <h4 id="cmpB-name">Lewis Hamilton</h4>
+          <p id="cmpB-team">Ferrari</p>
+          <div class="compare__big" id="cmpB-pts" style="color:#e10600">172</div>
+        </div>
+      </div>
+
+      <div class="compare__row"><div></div>
+        <div class="bar-a"><div id="cmpA-wins" style="width:90%"></div><span id="cmpA-winsN">5</span></div>
+        <div class="bar-b"><div id="cmpB-wins" style="width:54%"></div><span id="cmpB-winsN">3</span></div>
+        <div class="compare__lbl">Wins</div>
+      </div>
+      <div class="compare__row"><div></div>
+        <div class="bar-a"><div id="cmpA-pods" style="width:85%"></div><span id="cmpA-podsN">7</span></div>
+        <div class="bar-b"><div id="cmpB-pods" style="width:71%"></div><span id="cmpB-podsN">6</span></div>
+        <div class="compare__lbl">Podiums</div>
+      </div>
+      <div class="compare__row"><div></div>
+        <div class="bar-a"><div style="width:100%"></div><span>1</span></div>
+        <div class="bar-b"><div style="width:100%"></div><span>1</span></div>
+        <div class="compare__lbl">Poles</div>
+      </div>
+      <div class="compare__row"><div></div>
+        <div class="bar-a"><div id="cmpA-fp" style="width:74%"></div><span id="cmpA-fpN">2</span></div>
+        <div class="bar-b"><div id="cmpB-fp" style="width:100%"></div><span id="cmpB-fpN">3</span></div>
+        <div class="compare__lbl">Fastest Laps</div>
+      </div>
+      <div class="compare__row"><div></div>
+        <div class="bar-a"><div style="width:60%"></div><span>100%</span></div>
+        <div class="bar-b"><div style="width:100%"></div><span>98%</span></div>
+        <div class="compare__lbl">Finish Rate</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:24px;justify-content:center;flex-wrap:wrap">
+        <select id="selA" class="btn btn--ghost" style="background:var(--bg-2)"></select>
+        <select id="selB" class="btn btn--ghost" style="background:var(--bg-2)"></select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEWS ============ -->
+<section id="news" style="background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">Latest</div>
+        <h2 class="sec-title">From the Paddock</h2>
+        <p class="sec-sub">Race reports, technical analysis, and behind-the-scenes stories.</p>
+      </div>
+      <button class="btn btn--ghost">All Articles →</button>
+    </div>
+    <div class="news" id="newsBody"></div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="footer__grid">
+    <div class="footer__col footer__about">
+      <div class="logo">
+        <div class="logo__mark">A</div>
+        <div>APEX<small>FORMULA 1</small></div>
+      </div>
+      <p>The fastest way to follow Formula 1. Live timing, telemetry, breaking news, and analysis — built for fans who don't want to miss a single lap.</p>
+      <div class="footer__social">
+        <a href="#" title="Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+        <a href="#" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+        <a href="#" title="YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+        <a href="#" title="TikTok"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005.8 20.1a6.34 6.34 0 0010.86-4.43V8.5a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.84-.93z"/></svg></a>
+      </div>
+    </div>
+    <div class="footer__col">
+      <h5>Formula 1</h5>
+      <a href="#">Schedule</a><a href="#">Standings</a><a href="#">Drivers</a><a href="#">Teams</a><a href="#">Results</a>
+    </div>
+    <div class="footer__col">
+      <h5>Series</h5>
+      <a href="#">F1</a><a href="#">F2</a><a href="#">F3</a><a href="#">F1 Academy</a><a href="#">Esports</a>
+    </div>
+    <div class="footer__col">
+      <h5>Company</h5>
+      <a href="#">About</a><a href="#">Careers</a><a href="#">Press</a><a href="#">Partners</a><a href="#">Sustainability</a>
+    </div>
+    <div class="footer__col">
+      <h5>Support</h5>
+      <a href="#">Help Center</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Cookies</a>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <div>© 2026 APEX F1 — Unofficial fan-made concept. Not affiliated with Formula One Group.</div>
+    <div>BUILT FOR FANS · v2.4.1</div>
+  </div>
+</footer>
+
+<!-- ============ MODAL ============ -->
+<div class="modal" id="modal">
+  <div class="modal__box">
+    <button class="modal__close" onclick="closeModal()">✕</button>
+    <h3 class="modal__title" id="modalTitle">Sign In</h3>
+    <p class="modal__meta" id="modalMeta">Welcome back, racer.</p>
+    <div id="modalBody" style="color:#bdbdd0;font-size:14px;line-height:1.6">
+      <p style="margin-bottom:14px">Sign in to unlock live timing, driver radios, and personalized standings.</p>
+      <input type="email" placeholder="your@email.com" style="width:100%;padding:12px;background:#000;border:1px solid var(--line);color:#fff;border-radius:8px;margin-bottom:10px"/>
+      <input type="password" placeholder="Password" style="width:100%;padding:12px;background:#000;border:1px solid var(--line);color:#fff;border-radius:8px;margin-bottom:14px"/>
+      <button class="btn btn--primary" style="width:100%">Sign In →</button>
+      <p style="margin-top:14px;font-size:12px;color:var(--muted);text-align:center">No account? <a href="#" style="color:var(--red)">Create one</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const TEAMS = {
+  MLC: { name: "McLaren",          color: "#3671C6", gradient: "linear-gradient(135deg,#3671C6,#1a3a6e)" },
+  MER: { name: "Mercedes",         color: "#27F4D2", gradient: "linear-gradient(135deg,#27F4D2,#0a8a78)" },
+  RBR: { name: "Red Bull Racing",  color: "#3671C6", gradient: "linear-gradient(135deg,#1e3a8a,#0a1a3a)" },
+  FER: { name: "Ferrari",          color: "#E80020", gradient: "linear-gradient(135deg,#E80020,#8a0000)" },
+  AMR: { name: "Aston Martin",     color: "#229971", gradient: "linear-gradient(135deg,#229971,#0a4a3a)" },
+  ALP: { name: "Alpine",           color: "#0093CC", gradient: "linear-gradient(135deg,#0093CC,#005a7a)" },
+  WIL: { name: "Williams",         color: "#64C4FF", gradient: "linear-gradient(135deg,#64C4FF,#1a5a8a)" },
+  RB:  { name: "RB",               color: "#6692FF", gradient: "linear-gradient(135deg,#6692FF,#1a3a7a)" },
+  HAS: { name: "Haas",             color: "#B6BABD", gradient: "linear-gradient(135deg,#B6BABD,#5a5a5a)" },
+  KICK:{ name: "Kick Sauber",      color: "#52E252", gradient: "linear-gradient(135deg,#52E252,#1a8a1a)" },
+};
+
+const DRIVERS = [
+  { code: "NOR", name: "Lando Norris",     team: "MLC", pts: 224, wins: 5, podiums: 8, delta: 0  },
+  { code: "PIA", name: "Oscar Piastri",    team: "MLC", pts: 207, wins: 3, podiums: 7, delta: 1  },
+  { code: "VER", name: "Max Verstappen",   team: "RBR", pts: 198, wins: 2, podiums: 6, delta: -1 },
+  { code: "RUS", name: "George Russell",   team: "MER", pts: 172, wins: 2, podiums: 5, delta: 1  },
+  { code: "LEC", name: "Charles Leclerc",  team: "FER", pts: 154, wins: 1, podiums: 4, delta: -1 },
+  { code: "HAM", name: "Lewis Hamilton",   team: "FER", pts: 148, wins: 0, podiums: 3, delta: 0  },
+  { code: "ANT", name: "Kimi Antonelli",   team: "MER", pts: 121, wins: 0, podiums: 2, delta: 2  },
+  { code: "SAI", name: "Carlos Sainz",     team: "WIL", pts:  98, wins: 0, podiums: 1, delta: -1 },
+  { code: "ALO", name: "Fernando Alonso",  team: "AMR", pts:  72, wins: 0, podiums: 1, delta: 0  },
+  { code: "GAS", name: "Pierre Gasly",     team: "ALP", pts:  58, wins: 0, podiums: 0, delta: 1  },
+  { code: "TSU", name: "Yuki Tsunoda",     team: "RB",  pts:  52, wins: 0, podiums: 0, delta: -1 },
+  { code: "HUL", name: "Nico Hülkenberg",  team: "KICK",pts:  41, wins: 0, podiums: 0, delta: 0  },
+  { code: "ALB", name: "Alex Albon",       team: "WIL", pts:  38, wins: 0, podiums: 0, delta: 1  },
+  { code: "STR", name: "Lance Stroll",     team: "AMR", pts:  27, wins: 0, podiums: 0, delta: -1 },
+  { code: "BEA", name: "Oliver Bearman",   team: "HAS", pts:  22, wins: 0, podiums: 0, delta: 0  },
+  { code: "OCO", name: "Esteban Ocon",     team: "HAS", pts:  18, wins: 0, podiums: 0, delta: 0  },
+  { code: "DOO", name: "Jack Doohan",      team: "ALP", pts:  12, wins: 0, podiums: 0, delta: 0  },
+  { code: "LAW", name: "Liam Lawson",      team: "RB",  pts:   9, wins: 0, podiums: 0, delta: 0  },
+  { code: "PER", name: "Sergio Pérez",     team: "KICK",pts:   6, wins: 0, podiums: 0, delta: 0  },
+  { code: "BOT", name: "Valtteri Bottas",  team: "KICK",pts:   2, wins: 0, podiums: 0, delta: 0  },
+];
+
+const CONSTRUCTORS = [
+  { team: "MLC",  pts: 431, wins: 8, podiums: 15 },
+  { team: "MER",  pts: 293, wins: 2, podiums:  7 },
+  { team: "FER",  pts: 302, wins: 1, podiums:  7 },
+  { team: "RBR",  pts: 248, wins: 2, podiums:  6 },
+  { team: "WIL",  pts: 136, wins: 0, podiums:  1 },
+  { team: "AMR",  pts:  99, wins: 0, podiums:  1 },
+  { team: "ALP",  pts:  70, wins: 0, podiums:  0 },
+  { team: "RB",   pts:  61, wins: 0, podiums:  0 },
+  { team: "KICK", pts:  49, wins: 0, podiums:  0 },
+  { team: "HAS",  pts:  40, wins: 0, podiums:  0 },
+];
+
+const RACES_2026 = [
+  { round: 1,  name: "Bahrain Grand Prix",         circuit: "Bahrain International Circuit",   date: "Mar 8",  done: true,  winner: "Lando Norris",  flag: "🇧🇭" },
+  { round: 2,  name: "Saudi Arabian Grand Prix",   circuit: "Jeddah Corniche Circuit",         date: "Mar 15", done: true,  winner: "Oscar Piastri", flag: "🇸🇦" },
+  { round: 3,  name: "Australian Grand Prix",      circuit: "Albert Park Circuit",             date: "Mar 29", done: true,  winner: "Lando Norris",  flag: "🇦🇺" },
+  { round: 4,  name: "Japanese Grand Prix",        circuit: "Suzuka International Racing Course",date:"Apr 5",  done: true,  winner: "Max Verstappen",flag: "🇯🇵" },
+  { round: 5,  name: "Chinese Grand Prix",         circuit: "Shanghai International Circuit",  date: "Apr 19", done: true,  winner: "George Russell",flag: "🇨🇳" },
+  { round: 6,  name: "Miami Grand Prix",           circuit: "Miami International Autodrome",   date: "May 3",  done: true,  winner: "Charles Leclerc",flag:"🇺🇸" },
+  { round: 7,  name: "Emilia Romagna Grand Prix",  circuit: "Autodromo Enzo e Dino Ferrari",    date: "May 17", done: true,  winner: "Lando Norris",  flag: "🇮🇹" },
+  { round: 8,  name: "Monaco Grand Prix",          circuit: "Circuit de Monaco",               date: "May 31", done: true,  winner: "Oscar Piastri", flag: "🇲🇨" },
+  { round: 9,  name: "Canadian Grand Prix",        circuit: "Circuit Gilles Villeneuve",       date: "Jun 14", next: true, winner: null, flag: "🇨🇦", sprint: true },
+  { round: 10, name: "Spanish Grand Prix",         circuit: "Circuit de Barcelona-Catalunya",  date: "Jun 28", winner: null, flag: "🇪🇸" },
+  { round: 11, name: "Austrian Grand Prix",        circuit: "Red Bull Ring",                   date: "Jul 5",  winner: null, flag: "🇦🇹", sprint: true },
+  { round: 12, name: "British Grand Prix",         circuit: "Silverstone Circuit",             date: "Jul 19", winner: null, flag: "🇬🇧" },
+  { round: 13, name: "Hungarian Grand Prix",       circuit: "Hungaroring",                     date: "Jul 26", winner: null, flag: "🇭🇺" },
+  { round: 14, name: "Belgian Grand Prix",         circuit: "Circuit de Spa-Francorchamps",     date: "Aug 2",  winner: null, flag: "🇧🇪", sprint: true },
+  { round: 15, name: "Dutch Grand Prix",           circuit: "Circuit Zandvoort",               date: "Aug 23", winner: null, flag: "🇳🇱" },
+  { round: 16, name: "Italian Grand Prix",         circuit: "Autodromo Nazionale Monza",       date: "Sep 6",  winner: null, flag: "🇮🇹" },
+  { round: 17, name: "Azerbaijan Grand Prix",      circuit: "Baku City Circuit",               date: "Sep 20", winner: null, flag: "🇦🇿" },
+  { round: 18, name: "Singapore Grand Prix",       circuit: "Marina Bay Street Circuit",       date: "Oct 4",  winner: null, flag: "🇸🇬" },
+  { round: 19, name: "United States Grand Prix",   circuit: "Circuit of the Americas",         date: "Oct 18", winner: null, flag: "🇺🇸", sprint: true },
+  { round: 20, name: "Mexican Grand Prix",         circuit: "Autódromo Hermanos Rodríguez",    date: "Oct 25", winner: null, flag: "🇲🇽" },
+  { round: 21, name: "Brazilian Grand Prix",       circuit: "Autódromo José Carlos Pace",      date: "Nov 8",  winner: null, flag: "🇧🇷", sprint: true },
+  { round: 22, name: "Las Vegas Grand Prix",       circuit: "Las Vegas Strip Circuit",         date: "Nov 21", winner: null, flag: "🇺🇸" },
+  { round: 23, name: "Qatar Grand Prix",           circuit: "Lusail International Circuit",    date: "Nov 30", winner: null, flag: "🇶🇦" },
+  { round: 24, name: "Abu Dhabi Grand Prix",       circuit: "Yas Marina Circuit",              date: "Dec 7",  winner: null, flag: "🇦🇪" },
+];
+
+const NEWS = [
+  {
+    cat: "Race Report",
+    date: "May 31, 2026",
+    title: "Piastri takes masterful Monaco win as Norris extends championship lead",
+    excerpt: "The McLaren teammates delivered a tactical masterclass on the streets of Monte Carlo, with Piastri controlling the pace from pole to chequered flag.",
+    img: "linear-gradient(135deg,#1e3a8a 0%,#e10600 100%)"
+  },
+  {
+    cat: "Technical",
+    date: "May 28, 2026",
+    title: "Inside the 2026 active aerodynamics: how the new front wing works",
+    excerpt: "The biggest regulation shake-up in a decade is finally here. We break down the X-Mode and Z-Mode concepts changing how F1 cars generate downforce.",
+    img: "linear-gradient(135deg,#0a8a78 0%,#27F4D2 100%)"
+  },
+  {
+    cat: "Paddock",
+    date: "May 25, 2026",
+    title: "Hamilton on Ferrari struggles: \"I expected more, but the project is real\"",
+    excerpt: "The seven-time champion opened up on the early days of his Ferrari tenure, why the SF-26 doesn't yet match the MCL39, and what he sees coming.",
+    img: "linear-gradient(135deg,#8a0000 0%,#E80020 100%)"
+  },
+  {
+    cat: "Analysis",
+    date: "May 22, 2026",
+    title: "Why McLaren's pit wall is the new gold standard in F1 strategy",
+    excerpt: "From the undercut in Bahrain to the safety car gamble in Imola, McLaren's strategists are out-thinking the field. We talked to them.",
+    img: "linear-gradient(135deg,#1a3a6e 0%,#3671C6 100%)"
+  },
+  {
+    cat: "Exclusive",
+    date: "May 19, 2026",
+    title: "Verstappen exclusive: \"Red Bull can still win championships — we have a plan\"",
+    excerpt: "Max sits down with us ahead of the Canadian GP to discuss the team's recovery path, his new engineer, and the Adrian Newey-shaped hole.",
+    img: "linear-gradient(135deg,#0a1a3a 0%,#1e3a8a 100%)"
+  },
+  {
+    cat: "Transfer",
+    date: "May 15, 2026",
+    title: "Bottas confirmed at Cadillac for 2027 as the grid prepares for expansion",
+    excerpt: "The Finn signs a multi-year deal with the incoming 11th team, bringing a decade of Mercedes and Sauber experience to the American project.",
+    img: "linear-gradient(135deg,#5a5a5a 0%,#B6BABD 100%)"
+  },
+];
+
+/* =========================================================
+   TICKER
+   ========================================================= */
+const tickerItems = [
+  { t: "VER fastest in FP1", d: "Monaco" },
+  { t: "NOR leads championship by 17 points", d: "Standings" },
+  { t: "FIA confirms sprint format tweaks for Canada", d: "Breaking" },
+  { t: "Mercedes confirm Antonelli multi-year deal", d: "Contract" },
+  { t: "Rain forecast for Saturday at Circuit Gilles Villeneuve", d: "Weather" },
+  { t: "New pit lane speed limit announced: 80 km/h", d: "Regulation" },
+  { t: "Cadillac completes first on-track test at Silverstone", d: "2027" },
+  { t: "Hülkenberg signs 3-year extension with Sauber", d: "Contract" },
+  { t: "Tire compound allocation: C3/C4/C5 for Montreal", d: "Pirelli" },
+];
+function renderTicker(){
+  const el = document.getElementById("tickerTrack");
+  const make = () => tickerItems.map(i => `<span class="ticker__item"><strong>●</strong> ${i.t} <span style="color:#56566e">· ${i.d}</span></span>`).join("");
+  el.innerHTML = make() + make();
+}
+
+/* =========================================================
+   COUNTDOWN  (target: Canadian GP weekend, Sat 14 Jun 2026 18:00 local)
+   ========================================================= */
+const TARGET = new Date("2026-06-14T18:00:00").getTime();
+function pad(n){return String(n).padStart(2,"0")}
+function tick(){
+  const now = Date.now();
+  let diff = Math.max(0, TARGET - now);
+  const d = Math.floor(diff/86400000); diff %= 86400000;
+  const h = Math.floor(diff/3600000);  diff %= 3600000;
+  const m = Math.floor(diff/60000);    diff %= 60000;
+  const s = Math.floor(diff/1000);
+  document.getElementById("t-d").textContent = pad(d);
+  document.getElementById("t-h").textContent = pad(h);
+  document.getElementById("t-m").textContent = pad(m);
+  document.getElementById("t-s").textContent = pad(s);
+}
+setInterval(tick, 1000); tick();
+
+/* =========================================================
+   STANDINGS
+   ========================================================= */
+function posClass(p){ return p===1?"gold":p===2?"silver":p===3?"bronze":"" }
+function deltaArrow(d){ return d>0?`▲${d}`:d<0?`▼${-d}`:"—"; }
+function deltaClass(d){ return d>0?"up":d<0?"down":"flat"; }
+
+function renderDrivers(){
+  const body = document.getElementById("driversBody");
+  body.innerHTML = DRIVERS.slice(0,20).map((d,i)=>{
+    const t = TEAMS[d.team];
+    return `
+      <div class="standings-row" onclick="openModal('driver','${d.name}','${t.name}')">
+        <div class="pos ${posClass(i+1)}">${String(i+1).padStart(2,"0")}</div>
+        <div class="driver">
+          <div class="driver__avatar" style="background:${t.gradient}">${d.code}</div>
+          <div>
+            <div class="driver__name">${d.name}</div>
+            <div class="driver__team"><span class="team-dot" style="background:${t.color}"></span>${t.name}</div>
+          </div>
+        </div>
+        <div class="num-cell"><span class="pts">${d.pts}</span></div>
+        <div class="num-cell hide-sm">${d.wins}</div>
+        <div class="num-cell hide-sm">${d.podiums}</div>
+        <div class="delta ${deltaClass(d.delta)}">${deltaArrow(d.delta)}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderConstructors(){
+  const body = document.getElementById("ctorsBody");
+  const maxPts = Math.max(...CONSTRUCTORS.map(c=>c.pts));
+  body.innerHTML = CONSTRUCTORS.map((c,i)=>{
+    const t = TEAMS[c.team];
+    return `
+      <div class="standings-row ctor">
+        <div class="pos ${posClass(i+1)}">${String(i+1).padStart(2,"0")}</div>
+        <div class="driver">
+          <div class="driver__avatar" style="background:${t.gradient};font-size:11px">${t.name.split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="driver__name">${t.name}</div>
+            <div class="ctor__bar"><div style="width:${(c.pts/maxPts)*100}%;background:${t.color}"></div></div>
+          </div>
+        </div>
+        <div class="num-cell"><span class="pts">${c.pts}</span></div>
+        <div class="num-cell hide-sm">${c.wins}</div>
+        <div class="num-cell hide-sm">${c.podiums}</div>
+        <div class="delta flat">—</div>
+      </div>`;
+  }).join("");
+}
+
+/* =========================================================
+   CALENDAR
+   ========================================================= */
+function trackSVG(){
+  return `<svg viewBox="0 0 200 60" fill="none" stroke="#666" stroke-width="1.5">
+    <path d="M10 30 Q10 10 30 10 L80 10 Q100 10 100 30 L120 30 Q150 30 150 50 L180 50 Q190 50 190 30 Q190 10 170 10 L130 10" />
+  </svg>`;
+}
+function renderCalendar(season){
+  const data = season==="2026" ? RACES_2026 : RACES_2026.slice().reverse();
+  const body = document.getElementById("calendarBody");
+  body.innerHTML = data.map(r=>{
+    const teamClr = r.done ? "#444" : (r.next ? "#e10600" : "#666");
+    return `
+      <div class="race ${r.next?'next':''}" style="--team-color:${teamClr}" onclick="openModal('race','${r.name}')">
+        <div class="race__round">ROUND ${r.round} · ${r.flag||""}</div>
+        <div class="race__name">${r.name}</div>
+        <div class="race__circuit">${r.circuit}</div>
+        <div class="track-wrap">${trackSVG()}</div>
+        <div class="race__date">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <strong>${r.date}</strong> · 2026
+        </div>
+        ${r.winner ? `<div class="race__winner">🏆 Winner: <b>${r.winner}</b></div>` : ""}
+        <div class="race__sessions">
+          <span class="race__chip">FP1</span>
+          <span class="race__chip">FP2</span>
+          <span class="race__chip">QUALI</span>
+          <span class="race__chip">RACE</span>
+          ${r.sprint ? '<span class="race__chip sprint">SPRINT</span>' : ''}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/* =========================================================
+   NEWS
+   ========================================================= */
+function renderNews(){
+  const body = document.getElementById("newsBody");
+  body.innerHTML = NEWS.map(n=>`
+    <article class="news-card" onclick="openModal('article','${n.title.replace(/'/g,"")}')">
+      <div class="news__img" style="background:${n.img}">
+        <span class="news__cat">${n.cat}</span>
+      </div>
+      <div class="news__body">
+        <div class="news__date">${n.date}</div>
+        <h3 class="news__title">${n.title}</h3>
+        <p class="news__excerpt">${n.excerpt}</p>
+        <div class="news__read">Read More →</div>
+      </div>
+    </article>
+  `).join("");
+}
+
+/* =========================================================
+   COMPARE
+   ========================================================= */
+function getDriver(code){ return DRIVERS.find(d=>d.code===code); }
+function getTeamByDriver(code){ return TEAMS[getDriver(code).team]; }
+
+function setCompare(codeA, codeB){
+  const a = getDriver(codeA), b = getDriver(codeB);
+  const ta = TEAMS[a.team], tb = TEAMS[b.team];
+  document.getElementById("cmpA-circle").textContent = a.code;
+  document.getElementById("cmpA-circle").style.background = ta.gradient;
+  document.getElementById("cmpA-name").textContent = a.name;
+  document.getElementById("cmpA-team").textContent = ta.name;
+  document.getElementById("cmpA-pts").textContent = a.pts;
+  document.getElementById("cmpA-pts").style.color = ta.color;
+
+  document.getElementById("cmpB-circle").textContent = b.code;
+  document.getElementById("cmpB-circle").style.background = tb.gradient;
+  document.getElementById("cmpB-name").textContent = b.name;
+  document.getElementById("cmpB-team").textContent = tb.name;
+  document.getElementById("cmpB-pts").textContent = b.pts;
+  document.getElementById("cmpB-pts").style.color = tb.color;
+
+  const max = Math.max(a.wins, b.wins, 1);
+  document.getElementById("cmpA-wins").style.width = (a.wins/max*100)+"%";
+  document.getElementById("cmpB-wins").style.width = (b.wins/max*100)+"%";
+  document.getElementById("cmpA-winsN").textContent = a.wins;
+  document.getElementById("cmpB-winsN").textContent = b.wins;
+
+  const max2 = Math.max(a.podiums, b.podiums, 1);
+  document.getElementById("cmpA-pods").style.width = (a.podiums/max2*100)+"%";
+  document.getElementById("cmpB-pods").style.width = (b.podiums/max2*100)+"%";
+  document.getElementById("cmpA-podsN").textContent = a.podiums;
+  document.getElementById("cmpB-podsN").textContent = b.podiums;
+
+  const fa = 2, fb = 3;
+  const m3 = Math.max(fa,fb,1);
+  document.getElementById("cmpA-fp").style.width = (fa/m3*100)+"%";
+  document.getElementById("cmpB-fp").style.width = (fb/m3*100)+"%";
+  document.getElementById("cmpA-fpN").textContent = fa;
+  document.getElementById("cmpB-fpN").textContent = fb;
+}
+
+function buildSelectors(){
+  const selA = document.getElementById("selA");
+  const selB = document.getElementById("selB");
+  selA.innerHTML = DRIVERS.map(d=>`<option value="${d.code}">${d.name} (${TEAMS[d.team].name})</option>`).join("");
+  selB.innerHTML = DRIVERS.map(d=>`<option value="${d.code}">${d.name} (${TEAMS[d.team].name})</option>`).join("");
+  selA.value = "VER"; selB.value = "HAM";
+  selA.onchange = () => setCompare(selA.value, selB.value);
+  selB.onchange = () => setCompare(selA.value, selB.value);
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+document.getElementById("standingsTabs").addEventListener("click", e=>{
+  if(!e.target.classList.contains("tab")) return;
+  [...e.currentTarget.children].forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  const tab = e.target.dataset.tab;
+  document.getElementById("driversPanel").style.display = tab==="drivers" ? "" : "none";
+  document.getElementById("ctorsPanel").style.display  = tab==="ctors"  ? "" : "none";
+});
+document.getElementById("calTabs").addEventListener("click", e=>{
+  if(!e.target.classList.contains("tab")) return;
+  [...e.currentTarget.children].forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  renderCalendar(e.target.dataset.season);
+});
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+function openModal(type, ...args){
+  const m = document.getElementById("modal");
+  const t = document.getElementById("modalTitle");
+  const meta = document.getElementById("modalMeta");
+  const body = document.getElementById("modalBody");
+  if(type==="signin"){
+    t.textContent = "Sign In to APEX";
+    meta.textContent = "WELCOME BACK, RACER";
+    body.innerHTML = `
+      <p style="margin-bottom:14px">Sign in to unlock live timing, driver radios, and personalized standings.</p>
+      <input type="email" placeholder="your@email.com" style="width:100%;padding:12px;background:#000;border:1px solid var(--line);color:#fff;border-radius:8px;margin-bottom:10px"/>
+      <input type="password" placeholder="Password" style="width:100%;padding:12px;background:#000;border:1px solid var(--line);color:#fff;border-radius:8px;margin-bottom:14px"/>
+      <button class="btn btn--primary" style="width:100%">Sign In →</button>
+      <p style="margin-top:14px;font-size:12px;color:var(--muted);text-align:center">No account? <a href="#" style="color:var(--red)">Create one</a></p>`;
+  } else if(type==="driver"){
+    const [name, team] = args;
+    t.textContent = name; meta.textContent = `CURRENT TEAM · ${team.toUpperCase()}`;
+    body.innerHTML = `<p style="margin-bottom:10px">Detailed career stats, race-by-race breakdown, telemetry, and head-to-head records would load here.</p>
+      <p style="color:var(--muted);font-size:12px">This is a concept demo — wire to your data source for live content.</p>`;
+  } else if(type==="race"){
+    const [name] = args;
+    t.textContent = name; meta.textContent = "RACE DETAILS";
+    body.innerHTML = `<p>Full weekend schedule, weather forecast, circuit history, past winners, and live timing panel.</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:10px">Concept demo · static content.</p>`;
+  } else if(type==="article"){
+    const [title] = args;
+    t.textContent = title; meta.textContent = "ARTICLE PREVIEW";
+    body.innerHTML = `<p>Full article body, embedded media, related stories, and comments would render here.</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:10px">Concept demo · static content.</p>`;
+  }
+  m.classList.add("open");
+}
+function closeModal(){ document.getElementById("modal").classList.remove("open") }
+document.getElementById("modal").addEventListener("click", e=>{
+  if(e.target.id==="modal") closeModal();
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal() });
+
+/* =========================================================
+   STAT COUNTER ANIMATION
+   ========================================================= */
+function animateCounters(){
+  document.querySelectorAll(".stat__num").forEach(el=>{
+    const target = parseInt(el.dataset.count,10);
+    const dur = 1400;
+    const start = performance.now();
+    const step = (now)=>{
+      const p = Math.min(1, (now-start)/dur);
+      const eased = 1 - Math.pow(1-p, 3);
+      el.textContent = Math.floor(target*eased) + (target>100?"+":"");
+      if(p<1) requestAnimationFrame(step);
+      else el.textContent = target + (target>100?"+":"");
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* =========================================================
+   SMOOTH NAV SCROLL
+   ========================================================= */
+document.querySelectorAll(".nav__links a").forEach(a=>{
+  a.addEventListener("click", e=>{
+    e.preventDefault();
+    const id = a.getAttribute("href").slice(1);
+    document.getElementById(id).scrollIntoView({behavior:"smooth"});
+    document.querySelectorAll(".nav__links a").forEach(x=>x.classList.remove("active"));
+    a.classList.add("active");
+  });
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderTicker();
+renderDrivers();
+renderConstructors();
+renderCalendar("2026");
+renderNews();
+buildSelectors();
+setCompare("VER","HAM");
+animateCounters();
+
+/* =========================================================
+   PREMIUM ANIMATIONS
+   ========================================================= */
+
+/* ---------- Loader ---------- */
+(function(){
+  const loader = document.getElementById("loader");
+  if(!loader) return;
+  const bar = loader.querySelector(".loader__bar div");
+  const pct = loader.querySelector(".loader__pct");
+  let p = 0;
+  const tick = ()=>{
+    p += Math.random() * 14 + 4;
+    if(p >= 100){
+      p = 100; bar.style.width = "100%"; pct.textContent = "100%";
+      setTimeout(()=>loader.classList.add("hidden"), 350);
+    } else {
+      bar.style.width = p + "%";
+      pct.textContent = Math.floor(p) + "%";
+      setTimeout(tick, 50 + Math.random() * 70);
+    }
+  };
+  setTimeout(tick, 250);
+  setTimeout(()=>loader && loader.classList.add("hidden"), 6000); // safety
+})();
+
+/* ---------- Animated grid background ---------- */
+(function(){
+  const g = document.createElement("div");
+  g.className = "anim-grid";
+  document.body.appendChild(g);
+})();
+
+/* ---------- Floating light streaks ---------- */
+(function(){
+  for(let i=0; i<14; i++){
+    const s = document.createElement("div");
+    s.className = "streak";
+    s.style.left = (Math.random() * 100) + "%";
+    s.style.animationDuration = (7 + Math.random() * 10) + "s";
+    s.style.animationDelay = (Math.random() * 12) + "s";
+    s.style.height = (80 + Math.random() * 140) + "px";
+    document.body.appendChild(s);
+  }
+})();
+
+/* ---------- Auto-tag elements for reveal animations ---------- */
+document.querySelectorAll(".sec-head").forEach(el => el.setAttribute("data-reveal", "left"));
+document.querySelectorAll(".standings-card").forEach(el => el.setAttribute("data-reveal", "3d"));
+document.querySelectorAll(".countdown").forEach(el => el.setAttribute("data-reveal", "right"));
+document.querySelectorAll(".compare").forEach(el => el.setAttribute("data-reveal", "3d"));
+document.querySelectorAll(".calendar").forEach(el => el.setAttribute("data-stagger", ""));
+document.querySelectorAll(".news").forEach(el => el.setAttribute("data-stagger", ""));
+
+/* ---------- Add 3D tilt + lift + shine to cards ---------- */
+document.querySelectorAll(".race").forEach(el => el.classList.add("tilt", "lift"));
+document.querySelectorAll(".news-card").forEach(el => el.classList.add("tilt", "lift", "shine"));
+document.querySelectorAll(".countdown").forEach(el => el.classList.add("tilt", "lift"));
+document.querySelectorAll(".standings-card").forEach(el => el.classList.add("lift"));
+document.querySelectorAll(".btn--primary").forEach(el => el.classList.add("magnetic"));
+document.querySelectorAll(".stat__num").forEach(el => el.classList.add("flip"));
+
+/* ---------- Scroll reveal observer ---------- */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add("in");
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.08, rootMargin: "0px 0px -60px 0px"});
+document.querySelectorAll("[data-reveal], [data-stagger]").forEach(el => revealObserver.observe(el));
+
+/* ---------- 3D mouse-tilt on cards ---------- */
+document.querySelectorAll(".tilt").forEach(card => {
+  card.addEventListener("mousemove", e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    const rx = (0.5 - y) * 7;
+    const ry = (x - 0.5) * 7;
+    card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+  });
+  card.addEventListener("mouseleave", () => { card.style.transform = ""; });
+});
+
+/* ---------- Magnetic primary buttons ---------- */
+document.querySelectorAll(".magnetic").forEach(btn => {
+  btn.addEventListener("mousemove", e => {
+    const r = btn.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2;
+    const y = e.clientY - r.top - r.height / 2;
+    btn.style.transform = `translate(${x * 0.25}px, ${y * 0.3}px)`;
+  });
+  btn.addEventListener("mouseleave", () => { btn.style.transform = ""; });
+});
+
+/* ---------- Glitch text on hero ---------- */
+(function(){
+  const span = document.querySelector(".hero__title span");
+  if(!span) return;
+  span.classList.add("glitch");
+  span.setAttribute("data-text", span.textContent);
+})();
+
+/* ---------- Counter flip-in ---------- */
+const flipObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.style.animationDelay = Math.random() * 0.2 + "s";
+      e.target.classList.add("in");
+      flipObserver.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.5});
+document.querySelectorAll(".flip").forEach(el => flipObserver.observe(el));
+
+/* =========================================================
+   3D F1 CAR  (Three.js)
+   ========================================================= */
+(function initHero3D(){
+  if(!window.THREE) return;
+  const canvas = document.getElementById("hero3d");
+  if(!canvas) return;
+  if(window.innerWidth < 760) return; // skip on small screens
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+  camera.position.set(6.5, 3.2, 6.5);
+  camera.lookAt(0, 0.3, 0);
+
+  /* Lights */
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(5, 8, 5);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x4477ff, 0.9);
+  rim.position.set(-6, 3, -4);
+  scene.add(rim);
+  const redLight = new THREE.PointLight(0xe10600, 3, 18);
+  redLight.position.set(-3, 2, 3);
+  scene.add(redLight);
+  const cyanLight = new THREE.PointLight(0x00d2be, 2, 18);
+  cyanLight.position.set(3, 1, -2);
+  scene.add(cyanLight);
+
+  /* Materials */
+  const bodyMat   = new THREE.MeshStandardMaterial({color: 0xe10600, metalness: 0.85, roughness: 0.18});
+  const darkMat   = new THREE.MeshStandardMaterial({color: 0x141414, metalness: 0.55, roughness: 0.45});
+  const chromeMat = new THREE.MeshStandardMaterial({color: 0xe6e6e6, metalness: 0.95, roughness: 0.12});
+  const tireMat   = new THREE.MeshStandardMaterial({color: 0x0a0a0a, metalness: 0.2, roughness: 0.92});
+
+  /* F1 car */
+  const car = new THREE.Group();
+
+  // Main chassis
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.18, 3.3), bodyMat);
+  body.position.y = 0.36;
+  car.add(body);
+
+  // Side panels (thin red wings along body)
+  const skirt1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 2.6), bodyMat);
+  skirt1.position.set(0.32, 0.28, -0.1);
+  car.add(skirt1);
+  const skirt2 = skirt1.clone(); skirt2.position.x = -0.32; car.add(skirt2);
+
+  // Nose cone (tapered front)
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.5, 4), bodyMat);
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.set(0, 0.32, 2.35);
+  car.add(nose);
+
+  // Cockpit
+  const cockpit = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.28, 0.85), darkMat);
+  cockpit.position.set(0, 0.64, 0.1);
+  car.add(cockpit);
+
+  // Halo
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.33, 0.028, 10, 28, Math.PI),
+    chromeMat
+  );
+  halo.position.set(0, 0.82, 0.1);
+  halo.rotation.x = Math.PI / 2;
+  halo.rotation.z = Math.PI;
+  car.add(halo);
+
+  // Driver helmet
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12), bodyMat);
+  helmet.position.set(0, 0.78, 0.0);
+  helmet.scale.set(1, 0.9, 1.2);
+  car.add(helmet);
+
+  // Front wing
+  const fwing = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.04, 0.32), darkMat);
+  fwing.position.set(0, 0.12, 2.75);
+  car.add(fwing);
+  const fwingTop = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.03, 0.18), darkMat);
+  fwingTop.position.set(0, 0.2, 2.65);
+  car.add(fwingTop);
+
+  // Rear wing
+  const rwing = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.5, 0.05), darkMat);
+  rwing.position.set(0, 0.78, -1.6);
+  car.add(rwing);
+  // Endplates
+  const end1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, 0.4), darkMat);
+  end1.position.set(0.53, 0.78, -1.6);
+  car.add(end1);
+  const end2 = end1.clone(); end2.position.x = -0.53; car.add(end2);
+  // Rear wing supports
+  const sup1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.25), chromeMat);
+  sup1.position.set(0.25, 0.6, -1.55);
+  car.add(sup1);
+  const sup2 = sup1.clone(); sup2.position.x = -0.25; car.add(sup2);
+
+  // Side pods
+  const pod1 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.26, 1.4), darkMat);
+  pod1.position.set(0.44, 0.4, -0.2);
+  car.add(pod1);
+  const pod2 = pod1.clone(); pod2.position.x = -0.44; car.add(pod2);
+
+  // Air intake above driver
+  const intake = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.18, 0.25), darkMat);
+  intake.position.set(0, 0.6, 0.55);
+  car.add(intake);
+
+  // Wheels
+  const wheelGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.24, 28);
+  const wheelPositions = [
+    [0.55, 0.34,  1.15],
+    [-0.55, 0.34, 1.15],
+    [0.55, 0.34, -1.15],
+    [-0.55, 0.34, -1.15]
+  ];
+  wheelPositions.forEach(p => {
+    const tire = new THREE.Mesh(wheelGeo, tireMat);
+    tire.position.set(...p);
+    tire.rotation.z = Math.PI / 2;
+    car.add(tire);
+    // Rim
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.26, 20), chromeMat);
+    rim.position.set(...p);
+    rim.rotation.z = Math.PI / 2;
+    car.add(rim);
+    // Brake disc glow
+    const brake = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 0.27, 16),
+      new THREE.MeshStandardMaterial({color: 0xff3300, emissive: 0xff2200, emissiveIntensity: 1.5, metalness: 0.6, roughness: 0.4})
+    );
+    brake.position.set(...p);
+    brake.rotation.z = Math.PI / 2;
+    car.add(brake);
+  });
+
+  scene.add(car);
+
+  /* Ground */
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.MeshStandardMaterial({color: 0x000000, metalness: 0.9, roughness: 0.25})
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = 0.0;
+  scene.add(ground);
+
+  /* F1-style red/white curb hint */
+  const curb = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.02, 12),
+    new THREE.MeshStandardMaterial({color: 0xe10600, metalness: 0.2, roughness: 0.7})
+  );
+  curb.position.set(2.5, 0.02, 0);
+  scene.add(curb);
+
+  /* Grid */
+  const grid = new THREE.GridHelper(40, 40, 0xe10600, 0x1a1a2a);
+  grid.position.y = 0.01;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.35;
+  scene.add(grid);
+
+  /* Mouse parallax */
+  let mx = 0, my = 0;
+  let dragging = false, lastX = 0;
+  document.addEventListener("mousemove", e => {
+    if(!dragging){
+      mx = (e.clientX / window.innerWidth) * 2 - 1;
+      my = (e.clientY / window.innerHeight) * 2 - 1;
+    }
+  });
+
+  /* Drag to rotate the car */
+  canvas.style.pointerEvents = "auto";
+  canvas.addEventListener("pointerdown", e => {
+    dragging = true; lastX = e.clientX;
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = "grabbing";
+  });
+  canvas.addEventListener("pointermove", e => {
+    if(!dragging) return;
+    const dx = e.clientX - lastX; lastX = e.clientX;
+    car.rotation.y += dx * 0.01;
+  });
+  canvas.addEventListener("pointerup", e => {
+    dragging = false;
+    canvas.style.cursor = "grab";
+    try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+  });
+  canvas.addEventListener("pointerleave", () => { dragging = false; canvas.style.cursor = "grab"; });
+  canvas.style.cursor = "grab";
+
+  /* Resize */
+  function resize(){
+    const wrap = canvas.parentElement;
+    if(!wrap) return;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  /* Animate */
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = performance.now() * 0.001;
+    if(!dragging){
+      // Auto-rotate slowly
+      car.rotation.y += 0.0035;
+    }
+    car.position.y = Math.sin(t * 1.6) * 0.04;
+    // Camera parallax
+    camera.position.x += (mx * 2.2 + 6.5 - camera.position.x) * 0.05;
+    camera.position.y += (-my * 1.0 + 3.2 - camera.position.y) * 0.05;
+    camera.lookAt(0, 0.4, 0);
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+<!-- Three.js for 3D F1 car -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</body>
+</html>

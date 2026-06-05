@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.db
+
+# Node
+node_modules/
+.next/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Build outputs
+dist/
+build/
+out/
+
+# Media artifacts (rendered reels land here in dev)
+storage/
+*.mp4
+*.mp3
+*.wav
+*.webm
+
+# Logs
+*.log
+npm-debug.log*

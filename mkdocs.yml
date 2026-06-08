@@ -1,0 +1,16 @@
+site_name: News Reel Generator
+nav:
+  - Home: index.md
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: pink
+  features:
+    - navigation.tabs
+    - navigation.top
+
+plugins:
+  - search

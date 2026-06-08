@@ -88,6 +88,17 @@ export default function VideoLightbox({
               <dd className="truncate ml-3">{campaign.id.slice(0, 8)}</dd>
             </div>
           </dl>
+
+          {campaign.video_url && (
+            <a
+              href={campaign.video_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 block rounded border border-[var(--border)] px-3 py-2 font-mono text-[10px] leading-relaxed text-[var(--brand)] break-all hover:border-[var(--border-strong)] hover:text-[var(--text)]"
+            >
+              {campaign.video_url}
+            </a>
+          )}
         </aside>
 
         {/* Close button */}

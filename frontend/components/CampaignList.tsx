@@ -45,6 +45,16 @@ export default function CampaignList({ refreshKey }: { refreshKey: number }) {
                 {c.error_message}
               </p>
             )}
+            {c.status === "completed" && c.video_url && (
+              <a
+                href={c.video_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block mt-2 text-xs text-cyan-300 hover:text-cyan-100 break-all"
+              >
+                {c.video_url}
+              </a>
+            )}
           </div>
           {c.status === "completed" && c.video_url && (
             <div className="w-32 flex-shrink-0">

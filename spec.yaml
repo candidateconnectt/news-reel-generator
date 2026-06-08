@@ -1,0 +1,29 @@
+# spec.yaml - project manifest for spec-kit
+name: news-reel-generator
+description: Autonomous News Reel Generator backend
+version: 0.1.0
+author: candidateconnectt
+license: MIT
+python: ">=3.11"
+dependencies:
+  - fastapi
+  - "uvicorn[standard]"
+  - supabase
+  - httpx
+  - edge-tts
+  - moviepy
+  - python-dotenv
+  - pydantic-settings
+tasks:
+  start:
+    description: Run the full development stack (backend + frontend)
+    command: "python run.py"
+  lint:
+    description: Run code formatter and linter
+    command: "spec fmt . && spec lint ."
+  test:
+    description: Run test suite with Supabase fixture
+    command: "spec test"
+  docs:
+    description: Build HTML documentation
+    command: "spec doc build"

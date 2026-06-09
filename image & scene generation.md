@@ -238,4 +238,4 @@ The generation service must return:
 }
 
 This structure will later be consumed by the rendering pipeline.
-    
+        

@@ -11,8 +11,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Database
-    database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/reels"
+    # Database — uses Supabase direct connection when DATABASE_URL is set in .env
+    # Falls back to SQLite only if .env has no DATABASE_URL at all
+    database_url: str = ""
 
     # Google Gemini
     gemini_api_key: str = ""
@@ -24,6 +25,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
     supabase_bucket: str = "reels"
+    supabase_database_password: str = ""
 
     # Make.com
     make_com_webhook_url: str = ""

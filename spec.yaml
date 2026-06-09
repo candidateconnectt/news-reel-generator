@@ -13,7 +13,7 @@ dependencies:
   - edge-tts
   - moviepy
   - python-dotenv
-  - pydantic-settings
+  - pydantic-settings 
 tasks:
   start:
     description: Run the full development stack (backend + frontend)

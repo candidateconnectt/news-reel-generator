@@ -1,0 +1,16 @@
+Make new branch "Staging" & open PRs
+
+Connect Claude with Supabase MCP server
+
+Complete remaining working in the project
+
+use spec-kit and claude frontend Open-Source
+
+Deploy it
+
+
+Add two features
+1. Post generation for Agency
+2. couple of image generation of same theme/topic and merge with effects then add the audio and captions as well.
+
+image generation > add effects on each image > compile images > add caption > add audio

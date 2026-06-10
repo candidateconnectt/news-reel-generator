@@ -1,0 +1,8 @@
+headline: Introducing Trackin Pro
+supporting_text: Real-time seat availability, live crowd alerts, and AI route optimization
+cta: Get Early Access
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F835577a5-46d1-45d0-925c-f9da382fef6d_aigc.jpeg?Expires=1781174460&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=QQjggU1VYmg%2BMDEhWl6wQRjYIqI%3D
+provider: minimax
+content_type: product launch
+visual_bible_mood: Professional and Trustworthy

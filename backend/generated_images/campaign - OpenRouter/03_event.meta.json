@@ -1,0 +1,33 @@
+{
+  "name": "03_event",
+  "content_type": "event",
+  "topic": "Transit Tech Summit 2026 in Karachi, July 15-17, for transit industry professionals",
+  "headline": "Transit Tech Summit 2026",
+  "supporting_text": "July 15–17  ·  Karachi Convention Centre",
+  "cta": "Register Free",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Position Trackin as the leading transit technology partner at the Transit Tech Summit 2026, driving qualified leads and brand awareness among key decision-makers.",
+    "audience": "Transit industry professionals including CTOs, operations directors, and fleet managers from public and private transit agencies across Pakistan and the region.",
+    "marketing_angle": "Empower transit networks with real-time data intelligence to reduce costs, enhance passenger experience, and future-proof cities.",
+    "key_message": "Trackin transforms transit operations into connected, efficient, and passenger-centric systems—experience the future live at the summit.",
+    "tone": "Professional yet forward-looking; confident, persuasive, and solution-oriented with a clear focus on innovation and industry expertise.",
+    "visual_direction": "Clean, high-contrast graphics featuring dynamic urban transit maps, live data dashboards, and a flowing interface palette of navy blue, electric cyan, and white."
+  },
+  "bible": {
+    "mood": "Confident, forward-looking, and solution-oriented; a blend of professional authority and dynamic innovation inspired by modern urban mobility and data intelligence.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#00B4D8",
+      "#0A1128",
+      "#FFFFFF"
+    ],
+    "typography": "Inter – Headlines 48px Bold, Subheadings 24px Semi-Bold, Body 16px Regular, Captions 12px Medium. Clean sans-serif with ample letter-spacing for tech precision.",
+    "composition": "Asymmetric layouts with a strong diagonal or grid-based flow. Large, dynamic transit map overlays in the background, with floating data cards and dashboard elements in the foreground. Ample negative space to ensure clarity and focus on key messaging or product visuals.",
+    "lighting": "Bright, even ambient light with cool cyan highlights and warm orange accents. Glowing edges on UI elements and map lines to suggest live data and digital superiority. Minimal shadows, favoring flat design with subtle gradients for depth.",
+    "texture": "Smooth, almost glossy digital surfaces with subtle noise gradients. Light grid patterns evoking city maps or data network nodes. Some subtle motion blur on map lines to imply speed and real-time tracking.",
+    "background_description": "An abstract aerial view of a futuristic city at dusk, with glowing neon blue and orange transit routes weaving between sleek skyscrapers. The scene is soft-focused, with faint light trails suggesting high-speed movement, all overlaid with a semi-transparent navy gradient that recedes into the distance — no text, no people, no UI."
+  },
+  "background_prompt": "Photorealistic aerial view of a futuristic city at dusk, asymmetric composition with a strong diagonal flow. Glowing neon blue (#0057FF, #00B4D8) and warm orange (#FF6B35) transit routes weave between sleek skyscrapers over a deep navy ground (#0A1128). Soft-focused background with faint light trails suggesting high-speed movement. Overlaid with a semi-transparent navy gradient receding into the distance. Large, dynamic transit map lines and subtle grid patterns evoke data network nodes. Smooth, glossy digital surfaces with subtle gradients and floating data card shapes in the foreground, leaving ample negative space in the lower-center for text. No people, no text, no UI."
+}

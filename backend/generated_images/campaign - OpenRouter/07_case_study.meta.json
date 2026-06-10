@@ -1,0 +1,33 @@
+{
+  "name": "07_case_study",
+  "content_type": "case study",
+  "topic": "How Khayaban-e-Ferdous Bus Network reduced delays by 40% in a 90-day Trackin pilot",
+  "headline": "40% Fewer Delays",
+  "supporting_text": "How KMB transformed operations with Trackin in 90 days",
+  "cta": "Read Case Study",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Showcase how Trackin's real-time analytics and route optimization cut delays by 40% for a major urban bus network in just 90 days.",
+    "audience": "Transit authority directors and fleet managers seeking proven, data-driven solutions to improve service reliability.",
+    "marketing_angle": "A compelling before-and-after narrative that transforms a congested route challenge into a measurable performance win.",
+    "key_message": "Trackin turned chaotic bus schedules into precise, on-time arrivals, delivering a 40% reduction in delays in only 90 days.",
+    "tone": "Professional and confident, with a results-first approach that inspires trust and action.",
+    "visual_direction": "Clean, modern data visualizations (timeline graphs, delay maps, and dashboard screenshots) overlaid on crisp urban transit imagery."
+  },
+  "bible": {
+    "mood": "Professional, confident, data-driven, results-oriented",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#FFFFFF",
+      "#E5E7EB",
+      "#1E293B"
+    ],
+    "typography": "Inter: Light 36px for headlines, Regular 16px for body, SemiBold 12px for stats/data points",
+    "composition": "Balanced grid overlaying crisp data visualizations (timeline graphs, delay maps, dashboard screenshots) on clean urban transit imagery; clear left-to-right reading flow with data elements taking focus",
+    "lighting": "Bright, high-key lighting with soft shadows to maintain clarity; dynamic highlights to emphasize key data points and contrast",
+    "texture": "Clean, flat with subtle micro-gradients; matte finishes on UI elements; no heavy grain or noise",
+    "background_description": "An abstract, gradient-heavy scene blending deep blue (#0057FF) and warm orange (#FF6B35) hues, forming a soft glowing cityscape silhouette at dusk; sharp diagonal lines suggest movement and precision, with a luminous overlay that evokes modern dashboard displays"
+  },
+  "background_prompt": "A highly polished, photorealistic digital background for a modern SaaS brand. A deep blue (#0057FF) to warm orange (#FF6B35) gradient dusk sky serves as the backdrop, with a soft glowing cityscape silhouette. Over this, a clean, low-opacity grid suggests a left-to-right flow. Subtle, crisp data visualization elements—abstract timeline graphs, delay maps, and dashboard chart outlines—are integrated into the grid, using white (#FFFFFF) and light gray (#E5E7EB) for clarity. The lower-center of the image is a clean, empty zone of flat gradient, perfect for text placement. Matte, smooth textures, high-key, bright lighting with dynamic highlights on data points, and sharp diagonal lines evoke movement and precision. No text, labels, people, or UI screens."
+}

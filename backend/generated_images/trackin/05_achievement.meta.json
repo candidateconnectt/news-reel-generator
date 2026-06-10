@@ -1,0 +1,7 @@
+{
+  "name": "05_achievement",
+  "content_type": "achievement",
+  "layout_strategy": "stats_dense",
+  "mood": "triumphant and energetic, with a sense of achievement and progress",
+  "background_prompt": "A deep navy blue (#1A1A2E) gradient at the top-left, transitioning to dark #0057FF at the bottom-right. Glowing circular light bursts emanate from the top-left corner. A faint, luminous grid of data points recedes into the background, suggesting digital progress. At the bottom-right, a large, glowing progress ring or track bar in vibrant #0057FF sits partially off-screen. A sharp, dynamic diagonal line in orange (#FF6B35) cuts across the lower third, adding energy. High contrast, soft bokeh effects, and subtle light rays. Atmospheric, triumphant, and futuristic. No text or UI."
+}

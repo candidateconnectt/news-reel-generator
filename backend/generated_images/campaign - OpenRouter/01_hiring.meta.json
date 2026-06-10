@@ -1,0 +1,33 @@
+{
+  "name": "01_hiring",
+  "content_type": "hiring",
+  "topic": "We are hiring software engineers and product designers to build Pakistan's best transit tech platform",
+  "headline": "We're Hiring",
+  "supporting_text": "Join the team building the future of urban transit",
+  "cta": "View Open Roles",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Attract top-tier software engineers and product designers who want to build Pakistan's leading transit technology platform.",
+    "audience": "Experienced software engineers and product designers in Pakistan seeking impactful roles in mobility innovation.",
+    "marketing_angle": "Empower Pakistan's transit future by joining a mission-driven team solving real-world urban mobility challenges.",
+    "key_message": "Join Trackin to architect the backbone of Pakistan's transit revolution.",
+    "tone": "Professional and aspirational, blending technical credibility with a vision for national impact.",
+    "visual_direction": "Clean, futuristic interface mockups paired with dynamic transit maps and candid team collaboration shots."
+  },
+  "bible": {
+    "mood": "Professional, aspirational, forward-thinking, confident.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#1A1A2E",
+      "#EAF0FF",
+      "#FFFFFF"
+    ],
+    "typography": "Inter: Headings SemiBold 32-48px, body Regular 16-18px, captions Medium 12-14px. High tracking for buttons.",
+    "composition": "Clean layouts with strong grid hierarchy. Use dynamic diagonal lines or arcs for motion. Balance UI mockups with negative space around key elements.",
+    "lighting": "Bright, soft overhead with cool blue tones. Subtle rim light on team to add depth. UI elements use flat, even lighting for clarity.",
+    "texture": "Smooth, minimal. Subtle noise grain on backgrounds. Glassmorphism for UI overlays. No heavy textures.",
+    "background_description": "A softly lit, futuristic abstract scene with sleek metallic surfaces and glowing blue lines resembling transit routes trailing into the distance. Pale blue ambient light with warm orange accents from distant city lights. No people, text, or UI present."
+  },
+  "background_prompt": "A softly lit futuristic abstract scene featuring sleek metallic surfaces and glowing blue lines resembling transit routes that trail diagonally into the distance. Pale blue ambient light fills the space, with warm orange accents from distant city lights. A clean, modern composition uses dynamic diagonal arcs suggesting motion and strong negative space in the lower-center. The palette includes deep navy (#1A1A2E), vibrant blue (#0057FF), warm orange (#FF6B35), pale blue-white (#EAF0FF), and pure white (#FFFFFF). Smooth glass-like surfaces and subtle noise grain add depth. No people, text, or UI. Photorealistic, agency-grade, minimal aesthetic."
+}

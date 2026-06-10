@@ -1,0 +1,8 @@
+headline: Save 20% This Month
+supporting_text: Early-bird pricing for annual plans — limited seats
+cta: Claim Offer
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2Faaab7421-9a72-4929-af6b-c36d566c761f_aigc.jpeg?Expires=1781174360&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=tgXsnTqpXh9ZFQXei6PQjjsb8ec%3D
+provider: minimax
+content_type: promotion
+visual_bible_mood: Professional and Trustworthy

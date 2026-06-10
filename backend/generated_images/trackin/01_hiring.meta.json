@@ -1,0 +1,7 @@
+{
+  "name": "01_hiring",
+  "content_type": "hiring",
+  "layout_strategy": "feature_list",
+  "mood": "Inspiring and ambitious, conveying growth and opportunity",
+  "background_prompt": "Cinematic background, gradient style, professional and inspiring. A dynamic vertical gradient from vibrant #0057FF blue at top to deep navy #1A1A1A at bottom. Abstract geometric hexagons and intersecting circuit-like lines in accent #FF6B35 orange at varying opacities, glowing subtly. The bottom-left third reserved as a clean white canvas area with only faint, barely visible textural traces, leaving space for feature list overlay. In the upper-right region, soft, translucent silhouette figures of collaborative team members in light blues and whites, suggesting teamwork and growth. No text, no UI elements. High quality, ambitious mood, conveying opportunity and hiring. 8k resolution, unreal engine 5 style, volumetric lighting, professional composition."
+}

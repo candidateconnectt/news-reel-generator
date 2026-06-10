@@ -1,0 +1,8 @@
+headline: We Are Hiring
+supporting_text: Join the team building the future of urban transit
+cta: View Open Roles
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F32625c53-5d9d-4ccd-ac40-aff80462d49d_aigc.jpeg?Expires=1781174339&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=CFDs8onkfmk3YEbslc0eVkY%2FiJE%3D
+provider: minimax
+content_type: hiring
+visual_bible_mood: Professional and Trustworthy

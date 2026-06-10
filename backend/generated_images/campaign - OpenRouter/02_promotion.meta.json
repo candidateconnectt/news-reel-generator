@@ -1,0 +1,33 @@
+{
+  "name": "02_promotion",
+  "content_type": "promotion",
+  "topic": "20% off annual plans this month — limited seats for fleet managers and transit operators",
+  "headline": "Save 20% This Month",
+  "supporting_text": "Early-bird pricing on annual plans — limited seats",
+  "cta": "Claim Offer",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Drive immediate conversions by promoting a limited-time 20% discount on annual plans to fleet and transit operators.",
+    "audience": "Fleet managers and transit operators seeking reliable, scalable transit technology to optimize operations and reduce costs.",
+    "marketing_angle": "Urgency and exclusivity: limited seats available for this month-only offer, appealing to decision-makers' need for cost-effective, long-term solutions.",
+    "key_message": "Save 20% on annual plans this month—exclusive limited seats for fleet managers and transit operators to upgrade their operations with Trackin.",
+    "tone": "Professional yet compelling, with a sense of urgency and authority befitting a modern SaaS solution.",
+    "visual_direction": "Clean, data-driven interface mockups overlayed with a countdown timer and 'Limited Seats' badge, using a cool blue and gray palette with accent orange for calls-to-action."
+  },
+  "bible": {
+    "mood": "Authoritative urgency with a professional, clean aesthetic; confident and persuasive for B2B decision-makers.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#F0F4F8",
+      "#CBD5E1",
+      "#334155"
+    ],
+    "typography": "Inter: Headlines 36px/44px ExtraBold (Energetic CTAs), Subheads 20px/26px SemiBold, Body 16px/24px Regular, Captions 12px/16px Medium.",
+    "composition": "Centered layout with a floating countdown timer and 'Limited Seats' badge, surrounded by abstract data visualization overlays (sparklines, bar charts) to convey efficiency.",
+    "lighting": "Soft, even studio lighting with subtle rim light on UI elements; accent orange highlights glow gently for emphasis.",
+    "texture": "Smooth, glass-morphism surfaces with minimal noise gradient; subtle grid lines in background add tech nuance.",
+    "background_description": "A softly blurred abstract photograph of a highway at dusk, with cool blue and gray tones, empty of vehicles or people, featuring luminous orange brake light trails that add depth without distraction."
+  },
+  "background_prompt": "Photorealistic highway at dusk, empty of vehicles, cool blue and gray tones, soft glass-morphism surfaces, minimal noise gradient, subtle grid lines in background, abstract data visualization overlays including sparklines and bar charts floating mid-air, glowing orange brake light trails creating luminous streaks, soft even studio lighting with subtle rim light on UI elements, accent orange highlights glowing gently, smooth textures, modern clean aesthetic, centered composition with empty lower-center zone for text, colors #0057FF, #FF6B35, #F0F4F8, #CBD5E1, #334155, high-quality digital art, agency-grade."
+}

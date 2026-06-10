@@ -1,0 +1,33 @@
+{
+  "name": "04_announcement",
+  "content_type": "announcement",
+  "topic": "Trackin now covers 50 cities across Pakistan — major expansion milestone",
+  "headline": "Now Covering 50 Cities",
+  "supporting_text": "We just expanded to 30 new cities across Pakistan",
+  "cta": "Explore Coverage",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Announce Trackin's expansion to 50 cities in Pakistan, establishing leadership in transit technology and driving brand awareness.",
+    "audience": "Urban commuters, fleet operators, and public transport authorities in Pakistan seeking reliable, tech-driven transit solutions.",
+    "marketing_angle": "Highlight the milestone as a testament to Trackin's commitment to seamless mobility and nationwide connectivity.",
+    "key_message": "Trackin now connects 50 cities across Pakistan, making intelligent transit accessible to millions.",
+    "tone": "Professional and confident, with a forward-looking, tech-optimistic vibe.",
+    "visual_direction": "A dynamic map of Pakistan illuminated with 50 glowing nodes, linked by sleek data streams, overlaid with a subtle tech grid."
+  },
+  "bible": {
+    "mood": "Professional, confident, tech-optimistic, forward-looking",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#1A1A2E",
+      "#E6F0FF",
+      "#0D0D1A"
+    ],
+    "typography": "Inter: headings Bold 40px, subheadings SemiBold 26px, body Regular 18px",
+    "composition": "Dynamic map of Pakistan centered, slightly angled, with 50 glowing nodes connected by sleek data streams; nodes pulse with blue and orange, streams flow radially; subtle tech grid overlay adds depth; focus on the network and movement",
+    "lighting": "Glowing neon backlight from data nodes, soft rim light on map relief, ambient blue-orange gradient light, high contrast between bright accents and dark background",
+    "texture": "Smooth vector lines, subtle digital grid with faint noise, soft glow halos around nodes, slight metallic sheen on data streams",
+    "background_description": "A dark blue-black abstract space with a faint hexagonal grid receding into depth; central glowing nodes in primary blue and accent orange spread outward like a constellation over a stylized, topographical map silhouette of Pakistan; the nodes pulse with light trails and subtle particle effects, suggesting real-time data flow and connectivity."
+  },
+  "background_prompt": "Photorealistic digital art of a dynamic map of Pakistan centered, slightly angled, with 50 glowing nodes in primary blue (#0057FF) and accent orange (#FF6B35). Nodes pulse with light trails and subtle particles; sleek data streams flow radially across a faint hexagonal tech grid overlay. Dark blue-black abstract background (#0D0D1A, #1A1A2E) recedes into depth. Soft neon backlight from nodes, ambient blue-orange gradient light, high contrast accents against dark backdrop. Smooth vector lines, subtle digital grid with faint noise, soft glow halos, slight metallic sheen on streams. Minimalist foreground leaves clear lower-center space for text. Agency-grade, modern SaaS aesthetic."
+}

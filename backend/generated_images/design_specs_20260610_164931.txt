@@ -1,0 +1,20 @@
+{
+  "enhanced_prompt": "A professional and festive LinkedIn post design for an IT software company celebrating Bakra Eid (Eid al-Adha). The background features a gradient of deep green (#1B4332) to dark gold (#C59B27) with subtle geometric patterns inspired by Islamic art. In the center, a stylized, modern illustration of a crescent moon and a star in gold, with a soft glow. To the right, a clean, minimalist vector icon of a sheep or goat in silhouette, representing the sacrifice tradition. The foreground includes a sleek, modern white text box with rounded corners, containing the headline 'Eid Mubarak' in an elegant sans-serif font, and subtext 'Wishing you a blessed and prosperous Eid al-Adha from the [Company Name] team.' Below, a thin gold line separates the message from a small logo of the software company. The overall mood is warm, respectful, and professional, combining cultural elements with a tech-forward aesthetic. The composition is balanced with the visual elements on the left and text on the right, suitable for a LinkedIn banner or post.",
+  "style": "Modern, Minimalist with cultural motifs",
+  "color_theme": "Deep green (#1B4332), dark gold (#C59B27), white (#FFFFFF), and soft cream (#F5E6CA)",
+  "font_style": "Sans-serif, modern geometric (e.g., Montserrat or Roboto) for headlines; clean and readable for body text",
+  "font_size": "Headline: 48pt, Subheading: 30pt, Body text: 18pt, Company name/logo: 24pt",
+  "layout": "Centered with a left-aligned visual element (crescent moon and sheep icon) and right-aligned text block, with a bottom banner for logo",
+  "mood": "Respectful, warm, professional, and celebratory",
+  "target_audience": "IT professionals, software developers, business executives, and clients in the tech industry",
+  "key_elements": [
+    "Crescent moon and star",
+    "Sheep or goat silhouette",
+    "Geometric Islamic patterns",
+    "Gradient background",
+    "Gold accents",
+    "Modern sans-serif typography",
+    "Company logo",
+    "Eid greeting text"
+  ]
+}

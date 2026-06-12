@@ -8,6 +8,7 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         ffmpeg \
+        bash \
         fonts-dejavu-core \
  && rm -rf /var/lib/apt/lists/*
 
@@ -20,4 +21,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["bash", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -8,12 +8,6 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         ffmpeg \
-        libx264-164 \
-        libx265-199 \
-        libvpx7 \
-        libmp3lame0 \
-        libopus0 \
-        libvorbis0a \
         fonts-dejavu-core \
  && rm -rf /var/lib/apt/lists/*
 

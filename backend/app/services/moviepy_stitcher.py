@@ -256,13 +256,18 @@ async def create_normalized_video_chunk(
     global _FFMPEG_PATH
     if _FFMPEG_PATH is None:
         _FFMPEG_PATH = find_ffmpeg()
-    
+
+    # Defensive: make sure work_dir exists. The caller (render_worker) does
+    # create it, but Railway's hot-restart after env-var change can
+    # sometimes pass a fresh tempdir that hasn't been mkdir'd yet.
+    os.makedirs(work_dir, exist_ok=True)
+
     output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
     cap_overlay_y = TARGET_H - CAPTION_HEIGHT - CAPTION_BOTTOM_MARGIN
-    
+
     clip_duration = await get_video_duration(clip_path)
     logger.info(f"Scene {idx}: Clip={clip_duration:.2f}s, Target={target_duration:.2f}s")
-    
+
     # Step 1: Scale to fit within 1080x1920 (preserve aspect ratio).
     # force_original_aspect_ratio=decrease ensures the output never
     # exceeds the target box, so a 2160x4096 Pexels clip scales to
@@ -275,12 +280,18 @@ async def create_normalized_video_chunk(
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-an", scaled_video,
     ]
+    logger.info(f"Scene {idx}: scale cmd = {' '.join(scale_cmd)}")
     proc = await asyncio.create_subprocess_exec(*scale_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Scale failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Scale failed for scene {idx}")
-    
+        # Log the FULL stderr, not a 300-char truncation. The actual
+        # ffmpeg reason (OOM, missing codec, bad filter arg) is usually
+        # later in the output, not the version banner at the start.
+        err = stderr.decode(errors="replace")
+        logger.error(f"Scene {idx}: Scale failed (rc={proc.returncode})")
+        logger.error(f"Scene {idx}: Scale full stderr:\n{err}")
+        raise RuntimeError(f"Scale failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
+
     # Step 2: Pad to exact dimensions (add black bars)
     padded_video = os.path.join(work_dir, f"padded_{idx:03d}.mp4")
     pad_cmd = [
@@ -289,26 +300,32 @@ async def create_normalized_video_chunk(
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-an", padded_video,
     ]
+    logger.info(f"Scene {idx}: pad cmd = {' '.join(pad_cmd)}")
     proc = await asyncio.create_subprocess_exec(*pad_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Pad failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Pad failed for scene {idx}")
+        err = stderr.decode(errors="replace")
+        logger.error(f"Scene {idx}: Pad failed (rc={proc.returncode})")
+        logger.error(f"Scene {idx}: Pad full stderr:\n{err}")
+        raise RuntimeError(f"Pad failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
     os.unlink(scaled_video)
-    
+
     # Step 3: Trim to exact duration
     trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
     trim_cmd = [
         _FFMPEG_PATH, "-y", "-i", padded_video,
         "-t", str(target_duration), "-c:v", "copy", trimmed_video,
     ]
+    logger.info(f"Scene {idx}: trim cmd = {' '.join(trim_cmd)}")
     proc = await asyncio.create_subprocess_exec(*trim_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Trim failed for scene {idx}")
+        err = stderr.decode(errors="replace")
+        logger.error(f"Scene {idx}: Trim failed (rc={proc.returncode})")
+        logger.error(f"Scene {idx}: Trim full stderr:\n{err}")
+        raise RuntimeError(f"Trim failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
     os.unlink(padded_video)
-    
+
     # Step 4: Add caption if needed
     if caption_path and os.path.exists(caption_path):
         final_video = os.path.join(work_dir, f"final_{idx:03d}.mp4")
@@ -319,16 +336,19 @@ async def create_normalized_video_chunk(
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             final_video,
         ]
+        logger.info(f"Scene {idx}: overlay cmd = {' '.join(overlay_cmd)}")
         proc = await asyncio.create_subprocess_exec(*overlay_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         _, stderr = await proc.communicate()
         if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:300]}")
-            raise RuntimeError(f"Overlay failed for scene {idx}")
+            err = stderr.decode(errors="replace")
+            logger.error(f"Scene {idx}: Overlay failed (rc={proc.returncode})")
+            logger.error(f"Scene {idx}: Overlay full stderr:\n{err}")
+            raise RuntimeError(f"Overlay failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
         os.unlink(trimmed_video)
         os.rename(final_video, output_path)
     else:
         os.rename(trimmed_video, output_path)
-    
+
     logger.info(f"Scene {idx}: Chunk created")
     return output_path
 

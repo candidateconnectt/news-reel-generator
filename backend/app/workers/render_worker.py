@@ -128,13 +128,28 @@ async def _render_and_upload(
         # Upload to Supabase (always, no mock bypass)
         video_url = await upload_video_async(output_path, f"{campaign.id}.mp4")
 
-        # Clean up entire temp directory
-        import shutil as _sh
-        try:
-            _sh.rmtree(os.path.dirname(os.path.dirname(output_path)))
-            logger.info("Cleaned up temp directory")
-        except OSError as e:
-            logger.warning("Failed to clean up temp dir: %s", e)
+        # Temp directory cleanup intentionally removed.
+        # The previous code did:
+        #   shutil.rmtree(os.path.dirname(os.path.dirname(output_path)))
+        # which resolved to rmtree("/tmp") -- TWO levels up from
+        # /tmp/reel_<id>/final.mp4. That call against the system
+        # /tmp was both a no-op (raced with other workers) and a
+        # race surface: it would either silently fail (OSError on
+        # /tmp not empty, caught and logged) or, on some Linux
+        # tmpfs setups, actually delete a parent the next
+        # campaign was about to use, producing
+        #   FileNotFoundError: [Errno 2] No such file or directory:
+        #     '/tmp/reel_<next_id>_<rand>'
+        # for the new render.
+        #
+        # Instead, we let /tmp/reel_<id>/ accumulate and the OS
+        # reaps it on its own cadence (tmpfs is typically cleaned
+        # on a schedule or at container restart). The per-render
+        # disk footprint is ~50MB of clips + 5MB of chunks, and
+        # even with 100 stale renders that's only ~5GB which
+        # is well within Railway's 1GB+ disk budget if we ever
+        # need to flush -- but tmpfs in /tmp is volatile, so
+        # those files vanish on the next redeploy anyway.
 
         # Mark complete
         campaign.video_path = None

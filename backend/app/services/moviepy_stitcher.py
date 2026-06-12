@@ -303,6 +303,16 @@ async def create_normalized_video_chunk(
         "setpts=PTS-STARTPTS",
         f"fps={TARGET_FPS}",
         "format=yuv420p",
+        # Force even output dimensions for libx264. The pad step
+        # normally produces 1080x1920 (both even), but ffmpeg's
+        # expression evaluator rounds the padding offset
+        # (1080-1013)/2 = 33.5 inconsistently across builds, and
+        # some Pexels aspect ratios (e.g., 1080x2048 -> 1013x1920
+        # after scale) can leak odd widths into the final encode.
+        # libx264 hard-errors on width%2!=0 or height%2!=0.
+        # trunc(iw/2)*2:trunc(ih/2)*2 is a no-op for even
+        # dimensions and a safety net for odd ones.
+        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
     ])
     base_chain = ",".join(pre_filters)
 

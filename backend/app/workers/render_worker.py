@@ -91,7 +91,7 @@ async def _render_and_upload(
         # Route based on campaign type
         if campaign.campaign_type == "reel_image":
             # AI-generated image storyboard → Ken Burns motion + captions + voiceover
-            from app.services.moviepy_stitcher import stitch_images_async
+            from app.services.ffmpeg_stitcher import stitch_images_async
             images = campaign.generated_images or []
             if not images:
                 raise RuntimeError("generated_images is empty — call /generate-reel-scenes first")
@@ -104,7 +104,7 @@ async def _render_and_upload(
             logger.info("Image-based stitch complete for %s: %s", campaign.id, output_path)
         else:
             # Pexels video clips → resize + caption overlay + concat + voiceover
-            from app.services.moviepy_stitcher import download_clips_concurrent, stitch_reel_async
+            from app.services.ffmpeg_stitcher import download_clips_concurrent, stitch_reel_async
             successful_downloads = await download_clips_concurrent(
                 campaign.scenes_with_assets, clips_dir,
             )

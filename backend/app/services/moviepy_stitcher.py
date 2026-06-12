@@ -252,14 +252,19 @@ async def create_normalized_video_chunk(
     caption_path: str,
     work_dir: str,
 ) -> str:
-    """Create a normalized video chunk using simple ffmpeg commands that work on Railway."""
+    """Create a normalized video chunk in a SINGLE ffmpeg pass.
+
+    Consolidates the previous 4-step pipeline (scale -> pad -> trim ->
+    overlay, 3 intermediate files per scene) into one
+    filter_complex invocation. ~3x less disk I/O, ~3x fewer
+    encode passes, no intermediate scaled_/padded_/trimmed_*.mp4
+    files left on Railway's 1GB disk.
+    """
     global _FFMPEG_PATH
     if _FFMPEG_PATH is None:
         _FFMPEG_PATH = find_ffmpeg()
 
-    # Defensive: make sure work_dir exists. The caller (render_worker) does
-    # create it, but Railway's hot-restart after env-var change can
-    # sometimes pass a fresh tempdir that hasn't been mkdir'd yet.
+    # Defensive: make sure work_dir exists.
     os.makedirs(work_dir, exist_ok=True)
 
     output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
@@ -268,91 +273,90 @@ async def create_normalized_video_chunk(
     clip_duration = await get_video_duration(clip_path)
     logger.info(f"Scene {idx}: Clip={clip_duration:.2f}s, Target={target_duration:.2f}s")
 
-    # Step 1: Scale to fit within 1080x1920 (preserve aspect ratio).
-    # force_original_aspect_ratio=decrease ensures the output never
-    # exceeds the target box, so a 2160x4096 Pexels clip scales to
-    # ~1012x1920 instead of 1080x2048 (which the pad step cannot
-    # handle because pad can only add bars, never crop).
-    scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
-    scale_cmd = [
-        _FFMPEG_PATH, "-y", "-threads", "1", "-i", clip_path,
-        "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease",
-        "-r", "30",  # force 30fps: some Pexels clips are 60fps which doubles memory pressure
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-        "-an", scaled_video,
+    # Build the pre-overlay filter chain. The whole pipeline lives
+    # in one ffmpeg invocation now -- no scaled_/padded_/trimmed_*.mp4
+    # intermediate files.
+    #
+    # Filter order (left to right = applied in order):
+    #   scale=...:force_original_aspect_ratio=decrease -> fit within 1080x1920
+    #   pad=...   -> exactly 1080x1920 (black bars if needed)
+    #   loop=...  -> (only if target > clip) extend by looping
+    #   trim=...  -> cut to target_duration
+    #   setpts    -> reset timestamps to 0
+    #   fps=30    -> force 30fps output
+    #   format=yuv420p -> required for libx264 + most players
+    pre_filters = [
+        f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=decrease",
+        f"pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2",
     ]
-    logger.info(f"Scene {idx}: scale cmd = {' '.join(scale_cmd)}")
-    proc = await asyncio.create_subprocess_exec(*scale_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    if target_duration > clip_duration:
+        # Clip too short -> loop it to reach target duration before trimming.
+        # The size uses TARGET_FPS as an upper bound; the loop filter
+        # is lenient about exact frame counts (works on Windows ffmpeg
+        # and the johnvansickle static build on Railway).
+        loops_needed = int(target_duration / clip_duration) + 1
+        pre_filters.append(
+            f"loop=loop={loops_needed}:size={int(clip_duration * TARGET_FPS)}"
+        )
+    pre_filters.extend([
+        f"trim=duration={target_duration}",
+        "setpts=PTS-STARTPTS",
+        f"fps={TARGET_FPS}",
+        "format=yuv420p",
+    ])
+    base_chain = ",".join(pre_filters)
+
+    if caption_path and os.path.exists(caption_path):
+        # Two-input filter_complex: [0:v] is the Pexels clip with
+        # the pre_chain applied -> [v]; [1:v] is the caption PNG;
+        # overlay the caption on [v] -> [out]. Map only [out] so
+        # no audio stream is included (-an is implied by -map).
+        filter_complex = (
+            f"{base_chain}[v];"
+            f"[1:v]format=yuva420p[cap];"
+            f"[v][cap]overlay=0:{cap_overlay_y}[out]"
+        )
+        cmd = [
+            _FFMPEG_PATH, "-y", "-threads", "1",
+            "-i", clip_path,
+            "-i", caption_path,
+            "-filter_complex", filter_complex,
+            "-map", "[out]",
+            "-r", str(TARGET_FPS),
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-an",
+            output_path,
+        ]
+    else:
+        # No caption: simpler single-input -vf chain.
+        cmd = [
+            _FFMPEG_PATH, "-y", "-threads", "1",
+            "-i", clip_path,
+            "-vf", base_chain,
+            "-r", str(TARGET_FPS),
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-an",
+            output_path,
+        ]
+
+    logger.info(f"Scene {idx}: chunk cmd = {' '.join(cmd)}")
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
         # Log the FULL stderr, not a 300-char truncation. The actual
-        # ffmpeg reason (OOM, missing codec, bad filter arg) is usually
-        # later in the output, not the version banner at the start.
+        # ffmpeg reason (OOM, bad filter arg, missing codec) is
+        # usually later in the output, not the version banner.
         err = stderr.decode(errors="replace")
-        logger.error(f"Scene {idx}: Scale failed (rc={proc.returncode})")
-        logger.error(f"Scene {idx}: Scale full stderr:\n{err}")
-        raise RuntimeError(f"Scale failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
+        logger.error(f"Scene {idx}: chunk failed (rc={proc.returncode})")
+        logger.error(f"Scene {idx}: chunk full stderr:\n{err}")
+        raise RuntimeError(
+            f"Chunk failed for scene {idx}: "
+            f"{err.splitlines()[-1] if err else 'no stderr'}"
+        )
 
-    # Step 2: Pad to exact dimensions (add black bars)
-    padded_video = os.path.join(work_dir, f"padded_{idx:03d}.mp4")
-    pad_cmd = [
-        _FFMPEG_PATH, "-y", "-threads", "1", "-i", scaled_video,
-        "-vf", "pad=1080:1920:(ow-iw)/2:(oh-ih)/2",
-        "-r", "30",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-        "-an", padded_video,
-    ]
-    logger.info(f"Scene {idx}: pad cmd = {' '.join(pad_cmd)}")
-    proc = await asyncio.create_subprocess_exec(*pad_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    _, stderr = await proc.communicate()
-    if proc.returncode != 0:
-        err = stderr.decode(errors="replace")
-        logger.error(f"Scene {idx}: Pad failed (rc={proc.returncode})")
-        logger.error(f"Scene {idx}: Pad full stderr:\n{err}")
-        raise RuntimeError(f"Pad failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
-    os.unlink(scaled_video)
-
-    # Step 3: Trim to exact duration
-    trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
-    trim_cmd = [
-        _FFMPEG_PATH, "-y", "-threads", "1", "-i", padded_video,
-        "-t", str(target_duration), "-c:v", "copy", trimmed_video,
-    ]
-    logger.info(f"Scene {idx}: trim cmd = {' '.join(trim_cmd)}")
-    proc = await asyncio.create_subprocess_exec(*trim_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    _, stderr = await proc.communicate()
-    if proc.returncode != 0:
-        err = stderr.decode(errors="replace")
-        logger.error(f"Scene {idx}: Trim failed (rc={proc.returncode})")
-        logger.error(f"Scene {idx}: Trim full stderr:\n{err}")
-        raise RuntimeError(f"Trim failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
-    os.unlink(padded_video)
-
-    # Step 4: Add caption if needed
-    if caption_path and os.path.exists(caption_path):
-        final_video = os.path.join(work_dir, f"final_{idx:03d}.mp4")
-        overlay_cmd = [
-            _FFMPEG_PATH, "-y", "-threads", "1",
-            "-i", trimmed_video, "-i", caption_path,
-            "-filter_complex", f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y}",
-            "-r", "30",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            final_video,
-        ]
-        logger.info(f"Scene {idx}: overlay cmd = {' '.join(overlay_cmd)}")
-        proc = await asyncio.create_subprocess_exec(*overlay_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            err = stderr.decode(errors="replace")
-            logger.error(f"Scene {idx}: Overlay failed (rc={proc.returncode})")
-            logger.error(f"Scene {idx}: Overlay full stderr:\n{err}")
-            raise RuntimeError(f"Overlay failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
-        os.unlink(trimmed_video)
-        os.rename(final_video, output_path)
-    else:
-        os.rename(trimmed_video, output_path)
-
-    logger.info(f"Scene {idx}: Chunk created")
+    logger.info(f"Scene {idx}: Chunk created (single-pass)")
     return output_path
 
 

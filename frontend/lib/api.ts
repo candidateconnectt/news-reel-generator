@@ -1,6 +1,21 @@
-const BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://news-reel-generator-production.up.railway.app";
+function normalizeBase(raw: string | undefined): string {
+  // The Vercel dashboard's NEXT_PUBLIC_API_BASE_URL has been set
+  // without the "https://" scheme at least twice now (once on
+  // staging, once on main), which causes the browser to resolve
+  // `fetch("news-reel-generator-production.up.railway.app/...")`
+  // against the Vercel origin as a relative path, producing
+  //   https://news-reel-generator-main.vercel.app/<railway>/...
+  // which 404s. Normalize: prepend https:// if no scheme is
+  // present, strip trailing slashes.
+  const fallback = "https://news-reel-generator-production-b79b.up.railway.app";
+  let url = (raw || fallback).trim();
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
+  }
+  return url.replace(/\/+$/, "");
+}
+
+export const BASE = normalizeBase(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 export interface Campaign {
   id: string;

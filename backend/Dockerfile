@@ -3,8 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH="/app:${PYTHONPATH}"
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -35,5 +34,6 @@ ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
 
 EXPOSE 8000
 
-# Use shell form with variable expansion
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+# JSON array form (not shell form) so signals (SIGTERM) reach uvicorn
+# directly. The `sh -c` wrapper still allows the ${PORT:-8000} expansion.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

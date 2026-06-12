@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import campaigns, webhooks
+from app.api.routes import campaigns, webhooks, social_posts
 from app.config import settings
 from app.core.logging import setup_logging
 from app.database import Base, engine
@@ -50,6 +50,7 @@ app.mount(
 
 app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
 app.include_router(webhooks.router, prefix="/api", tags=["webhooks"])
+app.include_router(social_posts.router, prefix="/api", tags=["social_posts"])
 
 
 @app.get("/health")

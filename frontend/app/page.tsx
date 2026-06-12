@@ -9,6 +9,17 @@ import { listCampaigns, type Campaign } from "@/lib/api";
 
 const TERMINAL = new Set(["completed", "failed"]);
 
+// Filter out old/stale campaigns (older than 30 minutes with non-terminal status)
+function isStale(campaign: Campaign): boolean {
+  if (TERMINAL.has(campaign.status)) return false; // completed/failed are fine
+  const created = new Date(campaign.created_at);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffMins = diffMs / (1000 * 60);
+  // If processing for more than 30 mins, consider it stale
+  return diffMins > 30;
+}
+
 /** The Generate view: editorial hero on top, asymmetric two-column
  *  body (form on the left, "Live" panel on the right).
  */
@@ -21,8 +32,8 @@ export default function Home() {
   );
 
   const campaigns = data ?? [];
-  // Only show non-terminal campaigns in the Live panel.
-  const live = campaigns.filter((c) => !TERMINAL.has(c.status));
+  // Only show non-terminal and non-stale campaigns in the Live panel.
+  const live = campaigns.filter((c) => !TERMINAL.has(c.status) && !isStale(c));
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-16 pb-24">

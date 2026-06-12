@@ -21,7 +21,6 @@ from app.config import settings
 from app.database import SessionLocal
 from app.models.campaign import Campaign
 from app.services.edge_tts_service import run_synthesize_sync
-from app.services.moviepy_stitcher import stitch_reel_async
 from app.services.supabase_storage import upload_video_async
 
 logger = logging.getLogger(__name__)
@@ -89,28 +88,42 @@ async def _render_and_upload(
         await loop.run_in_executor(None, run_synthesize_sync,
             campaign.voiceover_full, voiceover_path, campaign.voice)
 
-        # Concurrent clip downloads
-        from app.services.moviepy_stitcher import download_clips_concurrent
-        successful_downloads = await download_clips_concurrent(
-            campaign.scenes_with_assets, clips_dir,
-        )
-        if not successful_downloads:
-            raise RuntimeError("No clips were successfully downloaded")
+        # Route based on campaign type
+        if campaign.campaign_type == "reel_image":
+            # AI-generated image storyboard → Ken Burns motion + captions + voiceover
+            from app.services.moviepy_stitcher import stitch_images_async
+            images = campaign.generated_images or []
+            if not images:
+                raise RuntimeError("generated_images is empty — call /generate-reel-scenes first")
+            await stitch_images_async(
+                images=images,
+                voiceover_path=voiceover_path,
+                output_path=output_path,
+                work_dir=clips_dir,
+            )
+            logger.info("Image-based stitch complete for %s: %s", campaign.id, output_path)
+        else:
+            # Pexels video clips → resize + caption overlay + concat + voiceover
+            from app.services.moviepy_stitcher import download_clips_concurrent, stitch_reel_async
+            successful_downloads = await download_clips_concurrent(
+                campaign.scenes_with_assets, clips_dir,
+            )
+            if not successful_downloads:
+                raise RuntimeError("No clips were successfully downloaded")
 
-        scenes_with_paths = []
-        for idx, clip_path in successful_downloads:
-            scene = campaign.scenes_with_assets[idx]
-            scene["video_url"] = clip_path
-            scenes_with_paths.append(scene)
+            scenes_with_paths = []
+            for idx, clip_path in successful_downloads:
+                scene = campaign.scenes_with_assets[idx]
+                scene["video_url"] = clip_path
+                scenes_with_paths.append(scene)
 
-        # FFmpeg stitch (non-blocking)
-        await stitch_reel_async(
-            scenes=scenes_with_paths,
-            voiceover_path=voiceover_path,
-            output_path=output_path,
-            work_dir=clips_dir,
-        )
-        logger.info("Stitch complete for %s: %s", campaign.id, output_path)
+            await stitch_reel_async(
+                scenes=scenes_with_paths,
+                voiceover_path=voiceover_path,
+                output_path=output_path,
+                work_dir=clips_dir,
+            )
+            logger.info("Video-based stitch complete for %s: %s", campaign.id, output_path)
 
         # Upload to Supabase (always, no mock bypass)
         video_url = await upload_video_async(output_path, f"{campaign.id}.mp4")

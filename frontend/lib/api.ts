@@ -15,6 +15,24 @@ export interface Campaign {
   completed_at?: string | null;
 }
 
+export interface SocialPost {
+  id: string;
+  company_name: string;
+  status: string;
+  posts_json?: PostData[] | null;
+  created_at: string;
+  completed_at?: string | null;
+}
+
+export interface PostData {
+  id: number;
+  content_type: string;
+  headline: string;
+  supporting_text: string;
+  cta: string;
+  final_url: string | null;
+}
+
 export interface CreateCampaignInput {
   topic: string;
   voice?: string;
@@ -43,5 +61,18 @@ export async function listCampaigns(): Promise<Campaign[]> {
 export async function getCampaign(id: string): Promise<Campaign> {
   const r = await fetch(`${BASE}/api/campaigns/${id}`, { cache: "no-store" });
   if (!r.ok) throw new Error(`Failed to get campaign (${r.status})`);
+  return r.json();
+}
+
+// Social Posts API
+export async function listSocialPosts(): Promise<SocialPost[]> {
+  const r = await fetch(`${BASE}/api/social-posts`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to list social posts (${r.status})`);
+  return r.json();
+}
+
+export async function getSocialPost(id: string): Promise<SocialPost> {
+  const r = await fetch(`${BASE}/api/social-posts/${id}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to get social post (${r.status})`);
   return r.json();
 }

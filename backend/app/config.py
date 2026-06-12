@@ -17,6 +17,20 @@ class Settings(BaseSettings):
 
     # Google Gemini
     gemini_api_key: str = ""
+    gemini_api_key2: str = ""
+
+    # MiniMax
+    minimax_api_key: str = ""
+
+    # DeepSeek
+    deepseek_api_key: str = ""
+
+    # Ideogram
+    ideogram_api_key: str = ""
+
+    # OpenAI
+    openai_api_key: str = ""
+    openai_api_key2: str = ""
 
     # Pexels
     pexels_api_key: str = ""

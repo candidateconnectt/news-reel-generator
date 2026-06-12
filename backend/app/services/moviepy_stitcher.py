@@ -246,7 +246,16 @@ async def create_normalized_video_chunk(
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, _ = await proc.communicate()
-    dims = stdout.decode().strip().split(',')
+    dims_str = stdout.decode().strip()
+    if not dims_str or ',' not in dims_str:
+        raise RuntimeError(
+            f"ffprobe returned no dimensions for clip {os.path.basename(clip_path)} "
+            f"-- the source is likely a HEVC/h265 stream that the bundled ffprobe "
+            f"could not parse. Pexels 4K vertical clips with the 'uhd_' prefix are "
+            f"commonly HEVC; the worker's stat-level probe (get_video_duration) read "
+            f"the duration, but the per-stream dimension probe returned empty."
+        )
+    dims = dims_str.split(',')
     src_w, src_h = int(dims[0]), int(dims[1])
     
     # Calculate scale to fit while maintaining aspect ratio

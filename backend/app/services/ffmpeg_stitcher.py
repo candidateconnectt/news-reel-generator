@@ -1,5 +1,6 @@
-"""MoviePy stitcher — downloads Pexels clips, overlays voiceover, burns captions.
-FIXED: Railway-compatible version with proper global variables and functions.
+"""FFmpeg-only stitcher — downloads Pexels clips, overlays voiceover, burns captions.
+PURE ffmpeg via asyncio.subprocess. No MoviePy anywhere.
+Railway-tuned: 720x1280 30fps, single-thread, ultrafast preset.
 """
 from __future__ import annotations
 
@@ -17,15 +18,21 @@ from PIL import Image, ImageDraw, ImageFont
 
 logger = logging.getLogger(__name__)
 
-TARGET_W = 1080
-TARGET_H = 1920  # 9:16 vertical
+# Render at 720x1280 for Railway's 1GB-RAM container. The final
+# MP4 is acceptable quality for vertical social reels; upscaling
+# to 1080x1920 at upload time is a one-shot op the platform
+# can do if needed. Doing the encode at 720p drops peak RSS
+# from ~1.5GB to ~400MB.
+TARGET_W = 720
+TARGET_H = 1280  # 9:16 vertical
 TARGET_FPS = 30
 
-# Caption block: bottom-of-screen strip
-CAPTION_HEIGHT = 240
-CAPTION_BOTTOM_MARGIN = 220
-CAPTION_FONT_SIZE = 64
-CAPTION_STROKE_WIDTH = 6
+# Caption block: bottom-of-screen strip (scaled with TARGET_W).
+# 720/1080 = 2/3, so 240 * 2/3 = 160 and 220 * 2/3 ~= 147.
+CAPTION_HEIGHT = 160
+CAPTION_BOTTOM_MARGIN = 147
+CAPTION_FONT_SIZE = 44
+CAPTION_STROKE_WIDTH = 4
 
 # Ken Burns motion parameters
 KB_START_ZOOM = 1.0
@@ -278,9 +285,9 @@ async def create_normalized_video_chunk(
     # intermediate files.
     #
     # Filter order (left to right = applied in order):
-    #   scale=...:force_original_aspect_ratio=decrease -> fit within 1080x1920
-    #   pad=...   -> exactly 1080x1920 (black bars if needed)
-    #   loop=...  -> (only if target > clip) extend by looping
+    #   scale=...:force_original_aspect_ratio=decrease -> fit within 720x1280
+    #   pad=...   -> exactly 720x1280 (black bars if needed)
+    #   tpad=...  -> (only if target > clip) freeze-frame-pad to target
     #   trim=...  -> cut to target_duration
     #   setpts    -> reset timestamps to 0
     #   fps=30    -> force 30fps output
@@ -290,13 +297,25 @@ async def create_normalized_video_chunk(
         f"pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2",
     ]
     if target_duration > clip_duration:
-        # Clip too short -> loop it to reach target duration before trimming.
-        # The size uses TARGET_FPS as an upper bound; the loop filter
-        # is lenient about exact frame counts (works on Windows ffmpeg
-        # and the johnvansickle static build on Railway).
-        loops_needed = int(target_duration / clip_duration) + 1
+        # Clip too short -> freeze-frame-pad the last frame to
+        # reach target duration. Previously used the `loop` filter
+        # with `size=int(clip_duration*TARGET_FPS)`, but Pexels
+        # clips can be 24/25/60fps, and the loop filter's `size`
+        # is the EXACT number of input frames to consume -- when
+        # the source has fewer frames than `size` (e.g., 25fps
+        # source with size=30fps*duration), the filter waits
+        # indefinitely for frames that don't exist. ffmpeg then
+        # logs `frame=0 fps=0` until the input EOFs and exits
+        # with no output produced.
+        #
+        # tpad with stop_mode=clone just freezes the last frame
+        # until the target duration is reached. No frame count
+        # needed, no deadlock, output is always the target
+        # duration. Visually it's a still frame for the tail
+        # of the scene -- acceptable for a 1-2 second pad on
+        # a Pexels clip.
         pre_filters.append(
-            f"loop=loop={loops_needed}:size={int(clip_duration * TARGET_FPS)}"
+            f"tpad=stop_mode=clone:stop_duration={target_duration}"
         )
     pre_filters.extend([
         f"trim=duration={target_duration}",
@@ -304,11 +323,10 @@ async def create_normalized_video_chunk(
         f"fps={TARGET_FPS}",
         "format=yuv420p",
         # Force even output dimensions for libx264. The pad step
-        # normally produces 1080x1920 (both even), but ffmpeg's
+        # normally produces 720x1280 (both even), but ffmpeg's
         # expression evaluator rounds the padding offset
-        # (1080-1013)/2 = 33.5 inconsistently across builds, and
-        # some Pexels aspect ratios (e.g., 1080x2048 -> 1013x1920
-        # after scale) can leak odd widths into the final encode.
+        # inconsistently across builds, and some Pexels aspect
+        # ratios can leak odd widths into the final encode.
         # libx264 hard-errors on width%2!=0 or height%2!=0.
         # trunc(iw/2)*2:trunc(ih/2)*2 is a no-op for even
         # dimensions and a safety net for odd ones.
@@ -333,7 +351,14 @@ async def create_normalized_video_chunk(
             "-filter_complex", filter_complex,
             "-map", "[out]",
             "-r", str(TARGET_FPS),
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            # Fix #1 + #2: force x264 single-thread (both via the
+            # -threads flag AND x264-params so ffmpeg's auto
+            # thread detector can't override it) and use
+            # ultrafast preset -- for an intermediate chunk
+            # there's no quality benefit in spending extra CPU on
+            # veryfast's motion estimation.
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-threads", "1", "-x264-params", "threads=1",
             "-an",
             output_path,
         ]
@@ -344,7 +369,8 @@ async def create_normalized_video_chunk(
             "-i", clip_path,
             "-vf", base_chain,
             "-r", str(TARGET_FPS),
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-threads", "1", "-x264-params", "threads=1",
             "-an",
             output_path,
         ]
@@ -406,7 +432,8 @@ async def create_normalized_image_chunk(
     cmd_video = [
         _FFMPEG_PATH, "-y", "-threads", "1", "-loop", "1", "-i", img_path,
         "-vf", f"{zoompan_filter},format=yuv420p",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-threads", "1", "-x264-params", "threads=1",
         "-video_track_timescale", str(TARGET_FPS),
         "-r", str(TARGET_FPS), "-vsync", "cfr",
         "-t", str(target_duration), temp_video,
@@ -414,16 +441,19 @@ async def create_normalized_image_chunk(
     proc = await asyncio.create_subprocess_exec(*cmd_video, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Image video failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Image video failed for scene {idx}")
-    
+        err = stderr.decode(errors="replace")
+        logger.error(f"Image video failed (rc={proc.returncode})")
+        logger.error(f"Image video full stderr:\n{err}")
+        raise RuntimeError(f"Image video failed for scene {idx}: {err.splitlines()[-1] if err else 'no stderr'}")
+
     if caption_path and os.path.exists(caption_path):
         cmd_overlay = [
             _FFMPEG_PATH, "-y", "-threads", "1",
             "-i", temp_video, "-i", caption_path,
             "-filter_complex", f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-threads", "1", "-x264-params", "threads=1",
             output_path,
         ]
         proc = await asyncio.create_subprocess_exec(*cmd_overlay, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
@@ -479,22 +509,24 @@ async def stitch_reel_async(
         if narration:
             caption_path = os.path.join(chunks_dir, f"caption_{i:03d}.png")
             text_len = len(narration)
-            fs = 64 if text_len <= 50 else (52 if text_len <= 80 else 44)
-            sw = 5 if text_len <= 50 else (4 if text_len <= 80 else 3)
+            # Caption font sized for 720p: roughly 2/3 of the
+            # original 1080p sizes (44/64, 36/52, 30/44, 3/5, 2/4, 2/3)
+            fs = 44 if text_len <= 50 else (36 if text_len <= 80 else 30)
+            sw = 3 if text_len <= 50 else (2 if text_len <= 80 else 2)
             cap_img = _render_caption_image(narration, width=TARGET_W, font_size=fs, stroke_width=sw)
             cap_img.save(caption_path, "PNG")
             caption_paths[i] = caption_path
         else:
             caption_paths[i] = None
-    
+
     processed_chunks = []
     processed_audios = []
-    
+
     for i, scene in enumerate(scenes):
         clip_path = scene.get("video_url")
         if not clip_path or not os.path.exists(clip_path):
             raise RuntimeError(f"Scene {i}: no valid video")
-        
+
         _, start_time, end_time = timings[i]
         duration = end_time - start_time
         logger.info(f"Scene {i}: duration={duration:.2f}s")
@@ -589,8 +621,10 @@ async def stitch_images_async(
         if narration:
             caption_path = os.path.join(chunks_dir, f"caption_{i:03d}.png")
             text_len = len(narration)
-            fs = 64 if text_len <= 50 else (52 if text_len <= 80 else 44)
-            sw = 5 if text_len <= 50 else (4 if text_len <= 80 else 3)
+            # Caption font sized for 720p: roughly 2/3 of the
+            # original 1080p sizes (44/64, 36/52, 30/44, 3/5, 2/4, 2/3)
+            fs = 44 if text_len <= 50 else (36 if text_len <= 80 else 30)
+            sw = 3 if text_len <= 50 else (2 if text_len <= 80 else 2)
             cap_img = _render_caption_image(narration, width=TARGET_W, font_size=fs, stroke_width=sw)
             cap_img.save(caption_path, "PNG")
             caption_paths[i] = caption_path

@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "bash -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'",
+    "startCommand": "bash -c 'echo \"[startup] ffmpeg:\" && ffmpeg -version 2>&1 | head -3 && echo \"[startup] ffmpeg encoders:\" && ffmpeg -encoders 2>&1 | grep -E \"libx264|h264|aac\" | head -10 && echo \"[startup] starting uvicorn on port ${PORT:-8000}\" && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'",
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Nav from "@/components/Nav";
+import { BASE as API_BASE } from "@/lib/api";
 
 interface BrandForm {
   company_name: string;
@@ -146,8 +147,6 @@ export default function SocialPostsPage() {
         key_choice: keyChoice,
       };
 
-      const API_BASE = "http://localhost:8000";
-
       const response = await fetch(`${API_BASE}/api/social-posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -186,7 +185,7 @@ export default function SocialPostsPage() {
       }
 
       try {
-        const response = await fetch(`http://localhost:8000/api/social-posts/${jobId}`);
+        const response = await fetch(`${API_BASE}/api/social-posts/${jobId}`);
         if (response.ok) {
           const data = await response.json();
           if (data.status === "completed" && data.posts) {

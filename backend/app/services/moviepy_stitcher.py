@@ -1,5 +1,5 @@
 """MoviePy stitcher — downloads Pexels clips, overlays voiceover, burns captions.
-IMPROVED: Two-step processing for Railway compatibility.
+IMPROVED: Isolated Chunk Architecture with perfect audio-video sync using actual TTS durations.
 """
 from __future__ import annotations
 
@@ -34,46 +34,14 @@ KB_PAN_X = 5
 KB_PAN_Y = 3
 
 
-# --- Helper to find ffmpeg/ffprobe ---
-def find_ffprobe():
-    """Find ffprobe executable path."""
-    import shutil
-    # Check PATH first
-    path = shutil.which('ffprobe')
-    if path:
-        return path
-    # Common locations
-    for p in ['/usr/local/bin/ffprobe', '/usr/bin/ffprobe']:
-        if os.path.exists(p):
-            return p
-    raise RuntimeError("ffprobe not found")
-
-def find_ffmpeg():
-    """Find ffmpeg executable path."""
-    import shutil
-    path = shutil.which('ffmpeg')
-    if path:
-        return path
-    for p in ['/usr/local/bin/ffmpeg', '/usr/bin/ffmpeg']:
-        if os.path.exists(p):
-            return p
-    raise RuntimeError("ffmpeg not found")
-
-# Cache paths
-_FFPROBE_PATH = None
-_FFMPEG_PATH = None
-
-
 # --- ACTUAL AUDIO DURATION (THE MASTER CLOCK) ---
 
 async def get_audio_duration(file_path: str) -> float:
     """Get EXACT duration of audio file using ffprobe."""
-    global _FFPROBE_PATH
-    if _FFPROBE_PATH is None:
-        _FFPROBE_PATH = find_ffprobe()
-    
-    cmd = [_FFPROBE_PATH, "-v", "error", "-show_entries", "format=duration",
-           "-of", "default=noprint_wrappers=1:nokey=1", file_path]
+    cmd = [
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", file_path
+    ]
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -85,12 +53,10 @@ async def get_audio_duration(file_path: str) -> float:
 
 async def get_video_duration(file_path: str) -> float:
     """Get accurate duration of video file using ffprobe."""
-    global _FFPROBE_PATH
-    if _FFPROBE_PATH is None:
-        _FFPROBE_PATH = find_ffprobe()
-    
-    cmd = [_FFPROBE_PATH, "-v", "error", "-show_entries", "format=duration",
-           "-of", "default=noprint_wrappers=1:nokey=1", file_path]
+    cmd = [
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", file_path
+    ]
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -108,6 +74,10 @@ def _find_bold_font(size: int) -> ImageFont.FreeTypeFont:
         "C:\\Windows\\Fonts\\segoeuib.ttf",
         "arialbd.ttf",
         "Arial Bold.ttf",
+        "arial.ttf",
+        "Arial.ttf",
+        "/Library/Fonts/Arial Bold.ttf",
+        "/System/Library/Fonts/Helvetica.ttc",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     ]
@@ -211,7 +181,7 @@ async def download_clips_concurrent(
     return sorted(successful, key=lambda x: x[0])
 
 
-# --- SIMPLIFIED TWO-STEP CHUNK CREATION (FIX FOR RAILWAY) ---
+# --- CRITICAL FIX: Isolated Chunk Architecture ---
 
 async def create_normalized_video_chunk(
     clip_path: str,
@@ -221,154 +191,93 @@ async def create_normalized_video_chunk(
     work_dir: str,
 ) -> str:
     """
-    Create a NORMALIZED video chunk - WORKS ON BOTH Windows AND Debian.
-    Uses only universally compatible ffmpeg syntax.
+    Create a NORMALIZED video chunk with CFR, exact duration, and reset timestamps.
     """
-    global _FFMPEG_PATH
-    if _FFMPEG_PATH is None:
-        _FFMPEG_PATH = find_ffmpeg()
-    
     output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
     cap_overlay_y = TARGET_H - CAPTION_HEIGHT - CAPTION_BOTTOM_MARGIN
     
-    # Get clip duration
+    # First, get the actual duration of the source clip
     clip_duration = await get_video_duration(clip_path)
-    logger.info(f"Scene {idx}: Clip duration={clip_duration:.2f}s, Target={target_duration:.2f}s")
     
-    # Step 1: Get video dimensions
-    probe_cmd = [
-        _FFMPEG_PATH, "-v", "error", "-select_streams", "v:0",
-        "-show_entries", "stream=width,height", "-of", "csv=p=0", clip_path
-    ]
-    proc = await asyncio.create_subprocess_exec(
-        *probe_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+    # Build the filter chain
+    filters = []
+    
+    # Step 1: Scale and crop to target dimensions
+    filters.append(
+        f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
+        f"crop={TARGET_W}:{TARGET_H}"
     )
-    stdout, _ = await proc.communicate()
-    dims_str = stdout.decode().strip()
-    if not dims_str or ',' not in dims_str:
-        raise RuntimeError(
-            f"ffprobe returned no dimensions for clip {os.path.basename(clip_path)} "
-            f"-- the source is likely a HEVC/h265 stream that the bundled ffprobe "
-            f"could not parse. Pexels 4K vertical clips with the 'uhd_' prefix are "
-            f"commonly HEVC; the worker's stat-level probe (get_video_duration) read "
-            f"the duration, but the per-stream dimension probe returned empty."
-        )
-    dims = dims_str.split(',')
-    src_w, src_h = int(dims[0]), int(dims[1])
     
-    # Calculate scale to fit while maintaining aspect ratio
-    scale_w = TARGET_W
-    scale_h = int(src_h * TARGET_W / src_w)
-    
-    if scale_h < TARGET_H:
-        # Need to pad vertically
-        scale_w = int(src_w * TARGET_H / src_h)
-        scale_h = TARGET_H
-    
-    # Step 2: Scale video (no complex filters)
-    scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
-    
-    scale_cmd = [
-        _FFMPEG_PATH, "-y",
-        "-i", clip_path,
-        "-vf", f"scale={scale_w}:{scale_h}",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-        "-video_track_timescale", str(TARGET_FPS),
-        "-r", str(TARGET_FPS),
-        "-vsync", "cfr",
-        "-an",
-        scaled_video,
-    ]
-    
-    proc = await asyncio.create_subprocess_exec(
-        *scale_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    _, stderr = await proc.communicate()
-    if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Scale failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Scale failed for scene {idx}")
+    # Step 2: Handle duration mismatch
+    if target_duration > clip_duration:
+        # Loop the clip to reach target duration
+        loops_needed = int(target_duration / clip_duration) + 1
+        filters.append(f"loop=loop={loops_needed}:size={int(clip_duration * TARGET_FPS)}")
     
     # Step 3: Trim to exact duration
-    trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
+    filters.append(f"trim=duration={target_duration}")
     
-    trim_cmd = [
-        _FFMPEG_PATH, "-y",
-        "-i", scaled_video,
-        "-t", str(target_duration),
-        "-c:v", "copy",
-        trimmed_video,
-    ]
+    # Step 4: Force constant frame rate
+    filters.append(f"fps={TARGET_FPS}")
+    
+    # Step 5: Reset timestamps to zero
+    filters.append("setpts=PTS-STARTPTS")
+    
+    # Step 6: Format for video
+    filters.append("format=yuv420p")
+    
+    video_filter = ",".join(filters)
+    
+    # Build FFmpeg command with caption overlay
+    if caption_path and os.path.exists(caption_path):
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", clip_path,
+            "-i", caption_path,
+            "-filter_complex",
+            f"[0:v]{video_filter}[v];"
+            f"[1:v]format=yuva420p[cap];"
+            f"[v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
+            "-map", "[out]",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-video_track_timescale", str(TARGET_FPS),
+            "-r", str(TARGET_FPS),
+            "-vsync", "cfr",
+            output_path,
+        ]
+    else:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", clip_path,
+            "-vf", video_filter,
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-video_track_timescale", str(TARGET_FPS),
+            "-r", str(TARGET_FPS),
+            "-vsync", "cfr",
+            output_path,
+        ]
+    
+    logger.info(f"Running FFmpeg for scene {idx} with target duration {target_duration:.2f}s")
     
     proc = await asyncio.create_subprocess_exec(
-        *trim_cmd,
+        *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     _, stderr = await proc.communicate()
+    
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:300]}")
-        raise RuntimeError(f"Trim failed for scene {idx}")
+        logger.error(f"Chunk creation for scene {idx} failed: {stderr.decode()[-500:]}")
+        raise RuntimeError(f"FFmpeg chunk creation failed for scene {idx}")
     
-    os.unlink(scaled_video)
-    
-    # Step 4: Add black bars to reach exact dimensions (if needed)
-    padded_video = trimmed_video
-    final_video_for_overlay = trimmed_video
-    
-    # Check if we need padding
-    temp_video = await get_video_duration(trimmed_video)
-    
-    # Use a simple overlay that works
-    if caption_path and os.path.exists(caption_path):
-        final_video = os.path.join(work_dir, f"final_{idx:03d}.mp4")
-        overlay_cmd = [
-            _FFMPEG_PATH, "-y",
-            "-i", trimmed_video,
-            "-i", caption_path,
-            "-filter_complex",
-            f"[0:v]pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2,format=yuv420p[bg];"
-            f"[1:v]format=yuva420p[cap];"
-            f"[bg][cap]overlay=0:{cap_overlay_y}[out]",
-            "-map", "[out]",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            final_video,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *overlay_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:300]}")
-            raise RuntimeError(f"Overlay failed for scene {idx}")
-        os.unlink(trimmed_video)
-        os.rename(final_video, output_path)
+    # Verify the output duration
+    if os.path.exists(output_path):
+        actual_duration = await get_video_duration(output_path)
+        logger.info(f"Scene {idx}: Created chunk with duration {actual_duration:.2f}s (target: {target_duration:.2f}s)")
     else:
-        # Just pad to target dimensions
-        pad_cmd = [
-            _FFMPEG_PATH, "-y",
-            "-i", trimmed_video,
-            "-vf", f"pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            output_path,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *pad_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Pad failed: {stderr.decode()[:300]}")
-            raise RuntimeError(f"Pad failed for scene {idx}")
-        os.unlink(trimmed_video)
+        logger.error(f"Scene {idx}: Output file not created!")
+        raise RuntimeError(f"Output file not created for scene {idx}")
     
-    logger.info(f"Scene {idx}: Chunk created successfully")
     return output_path
 
 
@@ -379,12 +288,8 @@ async def extract_audio_segment(
     output_path: str,
 ) -> str:
     """Extract precise audio segment for a scene."""
-    global _FFMPEG_PATH
-    if _FFMPEG_PATH is None:
-        _FFMPEG_PATH = find_ffmpeg()
-    
     cmd = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-ss", str(start_time),
         "-t", str(duration),
         "-i", voiceover_path,
@@ -399,8 +304,13 @@ async def extract_audio_segment(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Audio extraction failed: {stderr.decode()[:500]}")
+        logger.error(f"Audio extraction failed: {stderr.decode()[-500:]}")
         raise RuntimeError(f"Audio extraction failed for {start_time}-{duration}")
+    
+    if os.path.exists(output_path):
+        logger.info(f"Extracted audio segment: {output_path}")
+    else:
+        logger.error(f"Audio segment not created: {output_path}")
     
     return output_path
 
@@ -415,10 +325,6 @@ async def create_normalized_image_chunk(
     """
     Create a normalized video chunk from an image with Ken Burns motion.
     """
-    global _FFMPEG_PATH
-    if _FFMPEG_PATH is None:
-        _FFMPEG_PATH = find_ffmpeg()
-    
     output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
     cap_overlay_y = TARGET_H - CAPTION_HEIGHT - CAPTION_BOTTOM_MARGIN
     
@@ -435,63 +341,54 @@ async def create_normalized_image_chunk(
     x_center = (TARGET_W // 2) + (KB_PAN_X if idx % 2 == 0 else -KB_PAN_X)
     y_center = (TARGET_H // 2) + (KB_PAN_Y if idx % 4 < 2 else -KB_PAN_Y)
     
-    # Create video from image with Ken Burns
-    temp_video = os.path.join(work_dir, f"temp_image_{idx:03d}.mp4")
-    
     zoompan_filter = (
         f"zoompan=z='min({zoom_end},max({zoom_start},{zoom_start}+({zoom_end}-{zoom_start})*s/{nb_frames}))':"
         f"d={nb_frames}:s={TARGET_W}x{TARGET_H}:x={x_center}:y={y_center}:fps={TARGET_FPS},"
         f"setpts=PTS-STARTPTS"
     )
     
-    cmd_video = [
-        _FFMPEG_PATH, "-y",
-        "-loop", "1",
-        "-i", img_path,
-        "-vf", f"{zoompan_filter},format=yuv420p",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-        "-video_track_timescale", str(TARGET_FPS),
-        "-r", str(TARGET_FPS),
-        "-vsync", "cfr",
-        "-t", str(target_duration),
-        temp_video,
-    ]
+    if caption_path and os.path.exists(caption_path):
+        cmd = [
+            "ffmpeg", "-y",
+            "-loop", "1",
+            "-i", img_path,
+            "-i", caption_path,
+            "-filter_complex",
+            f"[0:v]{zoompan_filter},format=yuv420p[v];"
+            f"[1:v]format=yuva420p[cap];"
+            f"[v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
+            "-map", "[out]",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-video_track_timescale", str(TARGET_FPS),
+            "-r", str(TARGET_FPS),
+            "-vsync", "cfr",
+            "-t", str(target_duration),
+            output_path,
+        ]
+    else:
+        cmd = [
+            "ffmpeg", "-y",
+            "-loop", "1",
+            "-i", img_path,
+            "-vf", f"{zoompan_filter},format=yuv420p",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            "-video_track_timescale", str(TARGET_FPS),
+            "-r", str(TARGET_FPS),
+            "-vsync", "cfr",
+            "-t", str(target_duration),
+            output_path,
+        ]
     
     proc = await asyncio.create_subprocess_exec(
-        *cmd_video,
+        *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     _, stderr = await proc.communicate()
     
     if proc.returncode != 0:
-        logger.error(f"Image video creation for scene {idx} failed: {stderr.decode()[:500]}")
-        raise RuntimeError(f"Image video creation failed for scene {idx}")
-    
-    # Add caption if needed
-    if caption_path and os.path.exists(caption_path):
-        cmd_overlay = [
-            _FFMPEG_PATH, "-y",
-            "-i", temp_video,
-            "-i", caption_path,
-            "-filter_complex",
-            f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
-            "-map", "[out]",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            output_path,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_overlay,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Image overlay for scene {idx} failed: {stderr.decode()[:500]}")
-            raise RuntimeError(f"Image overlay failed for scene {idx}")
-        os.unlink(temp_video)
-    else:
-        os.rename(temp_video, output_path)
+        logger.error(f"Image chunk {idx} failed: {stderr.decode()[-500:]}")
+        raise RuntimeError(f"Image chunk creation failed for scene {idx}")
     
     return output_path
 
@@ -505,12 +402,8 @@ async def stitch_reel_async(
     work_dir: str,
 ) -> str:
     """
-    Main stitching function with two-step chunk architecture.
+    Main stitching function with isolated chunk architecture.
     """
-    global _FFMPEG_PATH
-    if _FFMPEG_PATH is None:
-        _FFMPEG_PATH = find_ffmpeg()
-    
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     
     # Create chunks directory inside work_dir
@@ -574,7 +467,7 @@ async def stitch_reel_async(
         _, start_time, end_time = timings[i]
         duration = end_time - start_time
         
-        logger.info(f"Processing scene {i}: duration={duration:.2f}s")
+        logger.info(f"Processing scene {i}: duration={duration:.2f}s (from voiceover)")
         
         # Create normalized video chunk
         video_chunk = await create_normalized_video_chunk(
@@ -587,32 +480,45 @@ async def stitch_reel_async(
         await extract_audio_segment(voiceover_path, start_time, duration, audio_chunk)
         processed_audios.append(audio_chunk)
     
-    # Write concat file for videos
+    # Write concat file for videos (using absolute paths)
     concat_video_file = os.path.join(chunks_dir, "concat_video.txt")
     with open(concat_video_file, "w") as f:
         for chunk in processed_chunks:
+            # Use absolute path or path relative to concat file's directory
             f.write(f"file '{chunk}'\n")
+    
+    logger.info(f"Video concat file created: {concat_video_file}")
+    logger.info(f"Video concat file contents: {open(concat_video_file).read()}")
     
     # Concatenate video chunks
     combined_video = os.path.join(chunks_dir, "combined_video.mp4")
     cmd_concat_video = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-f", "concat", "-safe", "0",
         "-i", concat_video_file,
         "-c", "copy",
+        "-video_track_timescale", str(TARGET_FPS),
         combined_video,
     ]
+    
+    logger.info(f"Running video concat command: {' '.join(cmd_concat_video)}")
     
     proc = await asyncio.create_subprocess_exec(
         *cmd_concat_video,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    _, stderr = await proc.communicate()
+    stdout, stderr = await proc.communicate()
     
     if proc.returncode != 0:
-        logger.error(f"Video concat failed: {stderr.decode()[:500]}")
-        raise RuntimeError("Video concatenation failed")
+        logger.error(f"Video concat failed with code {proc.returncode}")
+        logger.error(f"STDERR: {stderr.decode()}")
+        raise RuntimeError(f"Video concatenation failed: {stderr.decode()[:500]}")
+    
+    if not os.path.exists(combined_video):
+        raise RuntimeError(f"Combined video not created: {combined_video}")
+    
+    logger.info(f"Combined video created: {combined_video}")
     
     # Write concat file for audios
     concat_audio_file = os.path.join(chunks_dir, "concat_audio.txt")
@@ -623,7 +529,7 @@ async def stitch_reel_async(
     # Concatenate audio chunks
     combined_audio = os.path.join(chunks_dir, "combined_audio.m4a")
     cmd_concat_audio = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-f", "concat", "-safe", "0",
         "-i", concat_audio_file,
         "-c", "copy",
@@ -638,17 +544,18 @@ async def stitch_reel_async(
     _, stderr = await proc.communicate()
     
     if proc.returncode != 0:
-        logger.error(f"Audio concat failed: {stderr.decode()[:500]}")
+        logger.error(f"Audio concat failed: {stderr.decode()[-500:]}")
         raise RuntimeError("Audio concatenation failed")
     
     # Mux video and audio
     cmd_mux = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-i", combined_video,
         "-i", combined_audio,
         "-c:v", "copy",
         "-c:a", "aac", "-b:a", "128k",
         "-shortest",
+        "-video_track_timescale", str(TARGET_FPS),
         output_path,
     ]
     
@@ -660,7 +567,7 @@ async def stitch_reel_async(
     _, stderr = await proc.communicate()
     
     if proc.returncode != 0:
-        logger.error(f"Muxing failed: {stderr.decode()[:500]}")
+        logger.error(f"Muxing failed: {stderr.decode()[-500:]}")
         raise RuntimeError("Audio-video muxing failed")
     
     logger.info(f"Reel complete: {output_path}")
@@ -674,10 +581,6 @@ async def stitch_images_async(
     work_dir: str,
 ) -> str:
     """Render AI-image-based reel with perfect sync."""
-    global _FFMPEG_PATH
-    if _FFMPEG_PATH is None:
-        _FFMPEG_PATH = find_ffmpeg()
-    
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     
     chunks_dir = os.path.join(work_dir, "chunks")
@@ -767,10 +670,11 @@ async def stitch_images_async(
     
     combined_video = os.path.join(chunks_dir, "combined_video.mp4")
     cmd_concat_video = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-f", "concat", "-safe", "0",
         "-i", concat_video_file,
         "-c", "copy",
+        "-video_track_timescale", str(TARGET_FPS),
         combined_video,
     ]
     proc = await asyncio.create_subprocess_exec(
@@ -780,7 +684,7 @@ async def stitch_images_async(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Video concat failed: {stderr.decode()[:500]}")
+        logger.error(f"Video concat failed: {stderr.decode()[-500:]}")
         raise RuntimeError("Video concatenation failed")
     
     # Concatenate audios
@@ -791,7 +695,7 @@ async def stitch_images_async(
     
     combined_audio = os.path.join(chunks_dir, "combined_audio.m4a")
     cmd_concat_audio = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-f", "concat", "-safe", "0",
         "-i", concat_audio_file,
         "-c", "copy",
@@ -804,17 +708,18 @@ async def stitch_images_async(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Audio concat failed: {stderr.decode()[:500]}")
+        logger.error(f"Audio concat failed: {stderr.decode()[-500:]}")
         raise RuntimeError("Audio concatenation failed")
     
     # Mux
     cmd_mux = [
-        _FFMPEG_PATH, "-y",
+        "ffmpeg", "-y",
         "-i", combined_video,
         "-i", combined_audio,
         "-c:v", "copy",
         "-c:a", "aac", "-b:a", "128k",
         "-shortest",
+        "-video_track_timescale", str(TARGET_FPS),
         output_path,
     ]
     proc = await asyncio.create_subprocess_exec(
@@ -824,7 +729,7 @@ async def stitch_images_async(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Muxing failed: {stderr.decode()[:500]}")
+        logger.error(f"Muxing failed: {stderr.decode()[-500:]}")
         raise RuntimeError("Audio-video muxing failed")
     
     logger.info(f"Image reel complete: {output_path}")

@@ -1,16 +1,29 @@
-Make new branch "Staging" & open PRs
+Currently working on same project AI-powered Posts and Reel Generator:
 
-Connect Claude with Supabase MCP server
+Enhanced the code script more for better post based on parameters
 
-Complete remaining working in the project
+Explored several AI APIs for Image generation (Gemini, Openai, MiniMax, DeepSeek, Z.ai, Huggigface, Pollinations, OpenRouter)
 
-use spec-kit and claude frontend Open-Source
+Created sample posts using different APIs for testing quality purpose
 
-Deploy it
+Explored edge-tts audio voices for professional audio to integrate in generated reels.
 
 
+
+------------------------------
 Add two features
 1. Post generation for Agency
 2. couple of image generation of same theme/topic and merge with effects then add the audio and captions as well.
 
 image generation > add effects on each image > compile images > add caption > add audio
+
+Change MoviePy to FFmpeg	
+-------------------------
+
+
+Search voices on edge-tts
+
+
+Use docker in your current project - docker
+use cahtgpt or claude for containerization of the current project
+volumes, images, network, ports, 

@@ -263,11 +263,15 @@ async def create_normalized_video_chunk(
     clip_duration = await get_video_duration(clip_path)
     logger.info(f"Scene {idx}: Clip={clip_duration:.2f}s, Target={target_duration:.2f}s")
     
-    # Step 1: Scale to fit width (preserve aspect ratio)
+    # Step 1: Scale to fit within 1080x1920 (preserve aspect ratio).
+    # force_original_aspect_ratio=decrease ensures the output never
+    # exceeds the target box, so a 2160x4096 Pexels clip scales to
+    # ~1012x1920 instead of 1080x2048 (which the pad step cannot
+    # handle because pad can only add bars, never crop).
     scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
     scale_cmd = [
         _FFMPEG_PATH, "-y", "-i", clip_path,
-        "-vf", "scale=1080:-1",
+        "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-an", scaled_video,
     ]

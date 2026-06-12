@@ -221,8 +221,8 @@ async def create_normalized_video_chunk(
     work_dir: str,
 ) -> str:
     """
-    Create a NORMALIZED video chunk - NO CROP, only scale to fit.
-    This works reliably on both Windows and Debian ffmpeg.
+    Create a NORMALIZED video chunk - WORKS ON BOTH Windows AND Debian.
+    Uses only universally compatible ffmpeg syntax.
     """
     global _FFMPEG_PATH
     if _FFMPEG_PATH is None:
@@ -235,14 +235,36 @@ async def create_normalized_video_chunk(
     clip_duration = await get_video_duration(clip_path)
     logger.info(f"Scene {idx}: Clip duration={clip_duration:.2f}s, Target={target_duration:.2f}s")
     
-    # Step 1: Scale to fit target dimensions (maintain aspect ratio, add black bars)
+    # Step 1: Get video dimensions
+    probe_cmd = [
+        _FFMPEG_PATH, "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "stream=width,height", "-of", "csv=p=0", clip_path
+    ]
+    proc = await asyncio.create_subprocess_exec(
+        *probe_cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await proc.communicate()
+    dims = stdout.decode().strip().split(',')
+    src_w, src_h = int(dims[0]), int(dims[1])
+    
+    # Calculate scale to fit while maintaining aspect ratio
+    scale_w = TARGET_W
+    scale_h = int(src_h * TARGET_W / src_w)
+    
+    if scale_h < TARGET_H:
+        # Need to pad vertically
+        scale_w = int(src_w * TARGET_H / src_h)
+        scale_h = TARGET_H
+    
+    # Step 2: Scale video (no complex filters)
     scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
     
-    # Use simple scale that always works - pad with black bars if needed
     scale_cmd = [
         _FFMPEG_PATH, "-y",
         "-i", clip_path,
-        "-vf", f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=1,pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2",
+        "-vf", f"scale={scale_w}:{scale_h}",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-video_track_timescale", str(TARGET_FPS),
         "-r", str(TARGET_FPS),
@@ -258,10 +280,10 @@ async def create_normalized_video_chunk(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Scale failed: {stderr.decode()[:500]}")
+        logger.error(f"Scene {idx}: Scale failed: {stderr.decode()[:300]}")
         raise RuntimeError(f"Scale failed for scene {idx}")
     
-    # Step 2: Trim to exact duration
+    # Step 3: Trim to exact duration
     trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
     
     trim_cmd = [
@@ -279,12 +301,19 @@ async def create_normalized_video_chunk(
     )
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
-        logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:500]}")
+        logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:300]}")
         raise RuntimeError(f"Trim failed for scene {idx}")
     
     os.unlink(scaled_video)
     
-    # Step 3: Add caption overlay if needed
+    # Step 4: Add black bars to reach exact dimensions (if needed)
+    padded_video = trimmed_video
+    final_video_for_overlay = trimmed_video
+    
+    # Check if we need padding
+    temp_video = await get_video_duration(trimmed_video)
+    
+    # Use a simple overlay that works
     if caption_path and os.path.exists(caption_path):
         final_video = os.path.join(work_dir, f"final_{idx:03d}.mp4")
         overlay_cmd = [
@@ -292,7 +321,9 @@ async def create_normalized_video_chunk(
             "-i", trimmed_video,
             "-i", caption_path,
             "-filter_complex",
-            f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y}[out]",
+            f"[0:v]pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2,format=yuv420p[bg];"
+            f"[1:v]format=yuva420p[cap];"
+            f"[bg][cap]overlay=0:{cap_overlay_y}[out]",
             "-map", "[out]",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             final_video,
@@ -304,12 +335,29 @@ async def create_normalized_video_chunk(
         )
         _, stderr = await proc.communicate()
         if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:500]}")
+            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:300]}")
             raise RuntimeError(f"Overlay failed for scene {idx}")
         os.unlink(trimmed_video)
         os.rename(final_video, output_path)
     else:
-        os.rename(trimmed_video, output_path)
+        # Just pad to target dimensions
+        pad_cmd = [
+            _FFMPEG_PATH, "-y",
+            "-i", trimmed_video,
+            "-vf", f"pad={TARGET_W}:{TARGET_H}:(ow-iw)/2:(oh-ih)/2",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+            output_path,
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *pad_cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            logger.error(f"Scene {idx}: Pad failed: {stderr.decode()[:300]}")
+            raise RuntimeError(f"Pad failed for scene {idx}")
+        os.unlink(trimmed_video)
     
     logger.info(f"Scene {idx}: Chunk created successfully")
     return output_path

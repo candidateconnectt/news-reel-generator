@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://news-reel-generator-production.up.railway.app";
+import { BASE } from "@/lib/api";
 
 type Status = "checking" | "online" | "offline";
 

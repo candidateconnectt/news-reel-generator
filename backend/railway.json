@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "python -c \"import static_ffmpeg; static_ffmpeg.add_paths()\" && uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,

@@ -221,122 +221,87 @@ async def create_normalized_video_chunk(
     work_dir: str,
 ) -> str:
     """
-    Create a NORMALIZED video chunk - TWO STEP PROCESS for Railway compatibility.
-    Step 1: Normalize and trim the video to exact duration and dimensions
-    Step 2: Overlay caption (if exists)
+    Create a NORMALIZED video chunk - SEPARATE COMMANDS for Railway compatibility.
+    Uses simple ffmpeg commands instead of complex filter chains.
     """
     global _FFMPEG_PATH
     if _FFMPEG_PATH is None:
         _FFMPEG_PATH = find_ffmpeg()
     
-    # Step 1: Create normalized video without caption
-    temp_video = os.path.join(work_dir, f"temp_video_{idx:03d}.mp4")
+    # Step 1: Scale and crop to target dimensions (no trim yet)
+    scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
+    
+    scale_cmd = [
+        _FFMPEG_PATH, "-y",
+        "-i", clip_path,
+        "-vf", f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H}",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        "-video_track_timescale", str(TARGET_FPS),
+        "-r", str(TARGET_FPS),
+        "-vsync", "cfr",
+        scaled_video,
+    ]
+    
+    proc = await asyncio.create_subprocess_exec(
+        *scale_cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        logger.error(f"Scene {idx}: Scale failed: {stderr.decode()[:300]}")
+        raise RuntimeError(f"Scale failed for scene {idx}")
+    
+    # Step 2: Trim to exact duration
+    trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
+    
+    trim_cmd = [
+        _FFMPEG_PATH, "-y",
+        "-i", scaled_video,
+        "-t", str(target_duration),
+        "-c:v", "copy",
+        trimmed_video,
+    ]
+    
+    proc = await asyncio.create_subprocess_exec(
+        *trim_cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:300]}")
+        raise RuntimeError(f"Trim failed for scene {idx}")
+    
+    os.unlink(scaled_video)
+    
+    # Step 3: Add caption overlay if needed
+    output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
     cap_overlay_y = TARGET_H - CAPTION_HEIGHT - CAPTION_BOTTOM_MARGIN
     
-    # Get clip duration
-    clip_duration = await get_video_duration(clip_path)
-    logger.info(f"Scene {idx}: Clip duration={clip_duration:.2f}s, Target={target_duration:.2f}s")
-    
-    # Handle looping if needed (use concat demuxer approach for reliability)
-    if target_duration > clip_duration:
-        # Create a concat file to loop the video
-        loops_needed = int(target_duration / clip_duration) + 1
-        concat_file = os.path.join(work_dir, f"concat_list_{idx}.txt")
-        with open(concat_file, "w") as f:
-            for _ in range(loops_needed):
-                f.write(f"file '{clip_path}'\n")
-        
-        # Use concat demuxer to create a long video
-        looped_video = os.path.join(work_dir, f"looped_{idx:03d}.mp4")
-        cmd_concat = [
-            _FFMPEG_PATH, "-y",
-            "-f", "concat", "-safe", "0",
-            "-i", concat_file,
-            "-c", "copy",
-            looped_video,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_concat,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Loop concat failed: {stderr.decode()[:500]}")
-            raise RuntimeError(f"Loop concat failed for scene {idx}")
-        
-        # Now trim the looped video to exact duration
-        cmd_trim = [
-            _FFMPEG_PATH, "-y",
-            "-i", looped_video,
-            "-vf", f"trim=duration={target_duration},setpts=PTS-STARTPTS,scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},fps={TARGET_FPS},format=yuv420p",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-video_track_timescale", str(TARGET_FPS),
-            "-r", str(TARGET_FPS),
-            "-vsync", "cfr",
-            temp_video,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_trim,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:500]}")
-            raise RuntimeError(f"Trim failed for scene {idx}")
-        
-        # Clean up looped video
-        os.unlink(concat_file)
-        os.unlink(looped_video)
-    else:
-        # Just trim the original clip
-        cmd_trim = [
-            _FFMPEG_PATH, "-y",
-            "-i", clip_path,
-            "-vf", f"trim=duration={target_duration},setpts=PTS-STARTPTS,scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},fps={TARGET_FPS},format=yuv420p",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-video_track_timescale", str(TARGET_FPS),
-            "-r", str(TARGET_FPS),
-            "-vsync", "cfr",
-            temp_video,
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_trim,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Trim failed: {stderr.decode()[:500]}")
-            raise RuntimeError(f"Trim failed for scene {idx}")
-    
-    # Step 2: Add caption overlay if needed
-    output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
-    
     if caption_path and os.path.exists(caption_path):
-        cmd_overlay = [
+        overlay_cmd = [
             _FFMPEG_PATH, "-y",
-            "-i", temp_video,
+            "-i", trimmed_video,
             "-i", caption_path,
             "-filter_complex",
-            f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
+            f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y}[out]",
             "-map", "[out]",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             output_path,
         ]
         proc = await asyncio.create_subprocess_exec(
-            *cmd_overlay,
+            *overlay_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         _, stderr = await proc.communicate()
         if proc.returncode != 0:
-            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:500]}")
+            logger.error(f"Scene {idx}: Overlay failed: {stderr.decode()[:300]}")
             raise RuntimeError(f"Overlay failed for scene {idx}")
-        os.unlink(temp_video)
+        os.unlink(trimmed_video)
     else:
-        os.rename(temp_video, output_path)
+        os.rename(trimmed_video, output_path)
     
     logger.info(f"Scene {idx}: Chunk created successfully")
     return output_path

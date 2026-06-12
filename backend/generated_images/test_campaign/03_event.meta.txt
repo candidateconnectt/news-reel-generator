@@ -1,0 +1,8 @@
+headline: Transit Tech Summit 2026
+supporting_text: July 15-17 · Karachi Convention Centre
+cta: Register Free
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F78da0901-d8ff-44d5-9898-5e6baa78148c_aigc.jpeg?Expires=1781174381&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=CGQk9oSvTZVhhfG3%2F9HkaMfxvTQ%3D
+provider: minimax
+content_type: event
+visual_bible_mood: Professional and Trustworthy

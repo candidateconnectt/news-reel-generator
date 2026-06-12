@@ -1,0 +1,89 @@
+{
+  "brand": {
+    "name": "DataFLow AI",
+    "industry": "AI Automation & Enterprise SaaS",
+    "tagline": "Automating Operations Through Intelligent AI",
+    "primary_color": "#0F4C81",
+    "website": "WWW.DATAFLOWAI.COM"
+  },
+  "campaign": {
+    "objective": "Generate enterprise leads and establish thought leadership in AI automation",
+    "tone": "Professional",
+    "platform": "Linkedin",
+    "generated_at": "2026-06-10T20:27:42.993585"
+  },
+  "posts": [
+    {
+      "id": 1,
+      "content_type": "announcement",
+      "headline": "DataFLow AI Achieves SOC 2 Type II Certification: Enterprise Trust in Every Workflow",
+      "cta": "Read the announcement",
+      "layout_strategy": "hero_centered",
+      "mood": "Trustworthy, secure, professional",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\01_announcement_dataflow_ai_achieves_soc_2_typ.jpg"
+    },
+    {
+      "id": 2,
+      "content_type": "educational",
+      "headline": "The Hidden Cost of Manual Data Entry: Why It's Draining Your Bottom Line",
+      "cta": "Download the white paper",
+      "layout_strategy": "educational",
+      "mood": "Calm, efficient, modern",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\02_educational_the_hidden_cost_of_manual_data.jpg"
+    },
+    {
+      "id": 3,
+      "content_type": "inspirational",
+      "headline": "Automate the Mundane, Unleash the Genius: How DataFlow AI Frees Your Team to Innovate",
+      "cta": "See how",
+      "layout_strategy": "hero_centered",
+      "mood": "Empowered, focused, futuristic",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\03_inspirational_automate_the_mundane__unleash_.jpg"
+    },
+    {
+      "id": 4,
+      "content_type": "product",
+      "headline": "Meet Our New AI Customer Support Agent: 70% Instant Resolution, 100% Consistent Quality",
+      "cta": "Request a demo",
+      "layout_strategy": "hero_centered",
+      "mood": "Confident, futuristic, reliable",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\04_product_meet_our_new_ai_customer_suppo.jpg"
+    },
+    {
+      "id": 5,
+      "content_type": "case_study",
+      "headline": "How AccelCorp Cut Ops Costs by 40% with AI Workflow Automation",
+      "cta": "Read full case study",
+      "layout_strategy": "educational",
+      "mood": "Confident, sleek, empowering",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\05_case_study_how_accelcorp_cut_ops_costs_by.jpg"
+    },
+    {
+      "id": 6,
+      "content_type": "testimonial",
+      "headline": "We Finally Trust AI to Run Core Ops \u2014 Here's How DataFLOW AI Made It Possible",
+      "cta": "Start your pilot",
+      "layout_strategy": "quote_centered",
+      "mood": "Trustworthy, transparent, enterprise-grade",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\06_testimonial_we_finally_trust_ai_to_run_cor.jpg"
+    },
+    {
+      "id": 7,
+      "content_type": "industry_insight",
+      "headline": "Why 2025 Is the Year of Agentic Automation: Intelligence Meets Governance",
+      "cta": "Get the report",
+      "layout_strategy": "educational",
+      "mood": "Empowered, innovative, trustworthy",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\07_industry_insight_why_2025_is_the_year_of_agenti.jpg"
+    },
+    {
+      "id": 8,
+      "content_type": "hiring",
+      "headline": "We're Building the Future of Workflows \u2013 Join Us",
+      "cta": "View open roles",
+      "layout_strategy": "hero_centered",
+      "mood": "Empowered, innovative, focused",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\dataflow_ai_20260610_202305\\08_hiring_we_re_building_the_future_of_w.jpg"
+    }
+  ]
+}

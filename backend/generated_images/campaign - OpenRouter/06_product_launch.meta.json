@@ -1,0 +1,33 @@
+{
+  "name": "06_product_launch",
+  "content_type": "product launch",
+  "topic": "Introducing Trackin Pro — real-time seat availability, live crowd alerts, AI route optimization",
+  "headline": "Introducing Trackin Pro",
+  "supporting_text": "Real-time seats · Live crowd alerts · AI route optimization",
+  "cta": "Get Early Access",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Generate excitement and drive adoption of Trackin Pro among transit agencies and daily commuters by showcasing its real-time seat availability, live crowd alerts, and AI route optimization.",
+    "audience": "Urban commuters frustrated with overcrowded transit and transit operations managers seeking data-driven solutions to improve service efficiency and rider satisfaction.",
+    "marketing_angle": "Empower every journey with the foresight of real-time data, turning unpredictable transit into a seamless, informed experience.",
+    "key_message": "Trackin Pro delivers real-time seat availability, live crowd alerts, and AI-powered route optimization to make your commute smarter and stress-free.",
+    "tone": "Professional and confident, with a modern, forward-looking crispness that inspires trust in technology.",
+    "visual_direction": "Clean, data-centric interface mockups with animated heatmaps and route lines, using a vibrant yet polished color palette to convey precision and innovation."
+  },
+  "bible": {
+    "mood": "Energetic, forward-thinking, and authoritative; a polished blend of data-driven precision and human-centric innovation that inspires trust in cutting-edge mobility solutions.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#F2F4F8",
+      "#1E293B",
+      "#A0AEC0"
+    ],
+    "typography": "Inter, 900 for headlines (32–48px), 600 for subheads (20–24px), 400 for body (14–16px), 500 for data points (12–14px); all lowercase for UI labels, mixed case for narrative copy.",
+    "composition": "Clean, symmetrical grids with generous white space; data overlays and heatmaps occupy 60% of the canvas, supported by subtle iconography and route-line animations; central focal point is a dynamic real-time seat map with crowd indicators.",
+    "lighting": "Bright, uniform ambient light with a soft glow on interactive elements; subtle drop shadows for depth; no harsh highlights or dramatic shadows—maintains a flat, modern SaaS aesthetic.",
+    "texture": "Smooth, minimal surfaces; a faint noise grain (0.5–1%) on backgrounds for tactile depth; glassmorphism overlays on cards and data panels to convey transparency and sophistication.",
+    "background_description": "A softly gradient abstract background blending deep navy (from #0057FF) into a cool periwinkle, overlaid with fine, mesh-like grid lines that recede into a subtle blur; scattered, semi-transparent geometric shapes (circles, hexagons) pulse gently at 2–3% opacity, evoking a sense of motion and real-time data flow without dominating the visual space."
+  },
+  "background_prompt": "A softly gradient abstract background blending deep navy #0057FF into cool periwinkle, overlaid with fine mesh-like grid lines receding into subtle blur. At center, a dynamic real-time seat map with glowing seat indicators in #FF6B35 and #A0AEC0, surrounded by semi-transparent hexagonal and circular shapes pulsing at 2–3% opacity. Smooth, minimal surfaces with faint noise grain; glassmorphism overlays on data panels and heatmaps occupying 60% of canvas. Bright uniform ambient light, soft glow on interactive elements, subtle drop shadows. Symmetrical grid composition with generous white space, leaving clean lower-center area clear for text."
+}

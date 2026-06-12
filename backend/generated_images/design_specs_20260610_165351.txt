@@ -1,0 +1,19 @@
+{
+  "enhanced_prompt": "Create a LinkedIn post design for an IT software company celebrating Bakra Eid (Eid al-Adha). The design should blend traditional Islamic festive elements with modern tech aesthetics. Use a warm, elegant color palette of deep green, gold, and white. Incorporate subtle geometric patterns or a crescent moon motif alongside abstract tech icons like nodes, circuits, or code snippets. The main headline 'Eid Mubarak' in a sophisticated serif font, with a subheading 'Wishing you a blessed and prosperous Eid al-Adha' in a clean sans-serif. Include the company logo and a subtle call-to-action like 'Celebrating with our team and clients worldwide.' The mood should be respectful, festive, and professional. Layout: centered composition with a gradient background, soft lighting, and a touch of gold foil effect. Target audience: LinkedIn professionals in tech and business.",
+  "style": "Modern Corporate with Cultural Fusion",
+  "color_theme": "Deep Green (#004d40), Gold (#ffd700), White (#ffffff), Warm Beige (#f5f5dc)",
+  "font_style": "Main headline: Elegant serif (e.g., Playfair Display, Cormorant Garamond); Subheading: Clean sans-serif (e.g., Roboto, Open Sans); Body: Light sans-serif",
+  "font_size": "Main headline: 48pt; Subheading: 28pt; Body text: 18pt; Logo area: 24pt",
+  "layout": "Centered composition with headline at top, visual element in middle (e.g., crescent moon with circuit lines), subheading and logo at bottom",
+  "mood": "Respectful, Festive, Professional, Warm",
+  "target_audience": "IT professionals, software engineers, tech executives, LinkedIn network, clients and partners in tech industry",
+  "key_elements": [
+    "Crescent moon and star",
+    "Abstract circuit or node patterns",
+    "Company logo",
+    "Eid Mubarak text",
+    "Gold foil accents",
+    "Geometric Islamic patterns",
+    "Subtle code snippets or binary"
+  ]
+}

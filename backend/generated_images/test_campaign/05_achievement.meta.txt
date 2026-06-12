@@ -1,0 +1,8 @@
+headline: 1 Million Daily Rides
+supporting_text: Thank you for making us part of your daily commute
+cta: Share the Journey
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F83d5453d-0cf1-417e-8582-95ae58676fc6_aigc.jpeg?Expires=1781174421&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=SX2CjEtdTIBy0PjuEpeCQ8mjH7c%3D
+provider: minimax
+content_type: achievement
+visual_bible_mood: Professional and Trustworthy

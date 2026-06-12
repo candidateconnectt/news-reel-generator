@@ -1,0 +1,8 @@
+headline: How KMB Reduced Delays by 40%
+supporting_text: Khayaban-e-Ferdous Bus Network ran a 90-day pilot with Trackin
+cta: Read Case Study
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F65b79b5d-3d6c-4d54-8bcc-575b452ce3f6_aigc.jpeg?Expires=1781174301&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=dM1%2Ffnzby%2FUUHU52uOeQMRDTi3A%3D
+provider: minimax
+content_type: case study
+visual_bible_mood: Professional and Trustworthy

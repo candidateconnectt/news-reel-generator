@@ -1,0 +1,8 @@
+headline: Real-Time Bus Tracking
+supporting_text: Never miss your bus again
+cta: Download App
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F2761881d-d928-40ec-817f-937d710fd513_aigc.jpeg?Expires=1781174319&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=rGAH%2BPN5eDqWHg3fQv7qssx7yho%3D
+provider: minimax
+content_type: general
+visual_bible_mood: Professional and Trustworthy

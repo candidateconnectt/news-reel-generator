@@ -1,0 +1,33 @@
+{
+  "name": "05_achievement",
+  "content_type": "achievement",
+  "topic": "Trackin reached 1 million daily rides — celebrating with our community of commuters",
+  "headline": "1 Million Daily Rides",
+  "supporting_text": "Thank you for making us part of your daily commute",
+  "cta": "Share the Journey",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Celebrate the 1 million daily rides milestone to strengthen brand loyalty and amplify user success stories.",
+    "audience": "Daily commuters who rely on Trackin for real-time transit data and value efficiency and reliability.",
+    "marketing_angle": "Turn the milestone into a community win, highlighting how each ride contributes to smarter cities and better commutes.",
+    "key_message": "Thanks to you, Trackin now powers 1 million rides a day — together, we're making every journey count.",
+    "tone": "Professional yet warm, expressing gratitude while underscoring the platform's impact and innovation.",
+    "visual_direction": "Dynamic data visualization of a world map with glowing ride paths converging on a single celebratory point, overlaid with user quotes in modern sans-serif type."
+  },
+  "bible": {
+    "mood": "Professional yet warm, celebratory and innovative, conveying gratitude and impact.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#1A1A2E",
+      "#F5F5F5",
+      "#2ECC71"
+    ],
+    "typography": "Inter (sans-serif) for all text; headlines: ExtraBold 48px, subheads: Bold 24px, body: Regular 16px, quotes: Medium Italic 20px, stats: Bold 36px.",
+    "composition": "Dynamic world map as the base, with glowing ride paths (thin, luminous lines in primary blue) converging toward a bright celebratory point at center. User quotes overlay in clean cards with subtle drop shadows, positioned around the focal point. Stats like '1 MILLION DAILY RIDES' are prominent near the top.",
+    "lighting": "Soft, diffused global illumination with a warm glow radiating from the central celebration point, casting subtle highlights on paths and quote cards. Backlit map edges for depth.",
+    "texture": "Smooth, matte finish on map and UI elements; paths have a slight luminescence; a gentle noise overlay for digital sophistication.",
+    "background_description": "A softly blurred abstract gradient background transitioning from deep navy (#1A1A2E) near the edges to a warm golden-orange (#FF6B35) at the center, evoking a sunrise or celebratory burst. Subtle vignette for focus."
+  },
+  "background_prompt": "A dynamic digital world map at night, viewed from a low angle, with thin luminous blue (#0057FF) ride paths converging from all continents toward a brilliant golden-orange (#FF6B35) celebratory burst at the center. Soft diffused global illumination with warm glow radiating outward, casting subtle highlights on the map. Smooth matte texture on map elements, paths have slight luminescence with gentle noise overlay. Abstract gradient background transitioning from deep navy (#1A1A2E) at edges to warm golden-orange center, evoking a sunrise. Subtle vignette for focus. Empty lower-center zone for text. Photorealistic, high-quality digital art, modern SaaS aesthetic. Clean, minimalist, no people, no text, no UI."
+}

@@ -1,0 +1,29 @@
+Currently working on same project AI-powered Posts and Reel Generator:
+
+Enhanced the code script more for better post based on parameters
+
+Explored several AI APIs for Image generation (Gemini, Openai, MiniMax, DeepSeek, Z.ai, Huggigface, Pollinations, OpenRouter)
+
+Created sample posts using different APIs for testing quality purpose
+
+Explored edge-tts audio voices for professional audio to integrate in generated reels.
+
+
+
+------------------------------
+Add two features
+1. Post generation for Agency
+2. couple of image generation of same theme/topic and merge with effects then add the audio and captions as well.
+
+image generation > add effects on each image > compile images > add caption > add audio
+
+Change MoviePy to FFmpeg	
+-------------------------
+
+
+Search voices on edge-tts
+
+
+Use docker in your current project - docker
+use cahtgpt or claude for containerization of the current project
+volumes, images, network, ports, 

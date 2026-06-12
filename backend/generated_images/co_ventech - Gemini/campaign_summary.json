@@ -1,0 +1,89 @@
+{
+  "brand": {
+    "name": "Co-Ventech",
+    "industry": "IT Software Service company",
+    "tagline": "efficiency, innovation, or accessibility",
+    "primary_color": "#8B0000",
+    "website": "WWW.CO-VENTECH.COM"
+  },
+  "campaign": {
+    "objective": "to build trust and demonstrate concrete return on investment (ROI)",
+    "tone": "Professional",
+    "platform": "Linkedin",
+    "generated_at": "2026-06-10T20:19:23.974675"
+  },
+  "posts": [
+    {
+      "id": 1,
+      "content_type": "hiring",
+      "headline": "Join the Trust Builders: Engineer Ethical AI That Delivers Measurable ROI",
+      "cta": "See Open Roles",
+      "layout_strategy": "hero_centered",
+      "mood": "Confident, Ambitious, High-tech",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\01_hiring_join_the_trust_builders__engin.jpg"
+    },
+    {
+      "id": 2,
+      "content_type": "announcement",
+      "headline": "New NLP Engine: 40% Faster, 95% Accuracy \u2013 Unlock Immediate ROI",
+      "cta": "Read the Update",
+      "layout_strategy": "hero_centered",
+      "mood": "Confident, precise, confident innovation",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\02_announcement_new_nlp_engine__40__faster__95.jpg"
+    },
+    {
+      "id": 3,
+      "content_type": "educational",
+      "headline": "ROI in AI: The 3 Metrics That Prove Machine Learning Drives Profit",
+      "cta": "Download the Guide",
+      "layout_strategy": "educational",
+      "mood": "Clarity, Confidence, Modern, Professional",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\03_educational_roi_in_ai__the_3_metrics_that_.jpg"
+    },
+    {
+      "id": 4,
+      "content_type": "inspirational",
+      "headline": "From Potential to Profit: Unlock Measurable ROI with Trustworthy AI",
+      "cta": "Explore Our Approach",
+      "layout_strategy": "hero_centered",
+      "mood": "Trustworthy, confident, forward-looking",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\04_inspirational_from_potential_to_profit__unlo.jpg"
+    },
+    {
+      "id": 5,
+      "content_type": "product",
+      "headline": "Automation That Reports Back: See Your ROI in Real Time",
+      "cta": "Request a Demo",
+      "layout_strategy": "hero_centered",
+      "mood": "Confident, modern, empowered",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\05_product_automation_that_reports_back__.jpg"
+    },
+    {
+      "id": 6,
+      "content_type": "case_study",
+      "headline": "How We Saved $2M in Year One for a Global Logistics Firm",
+      "cta": "Read Full Story",
+      "layout_strategy": "stats_dense",
+      "mood": "Confident, Trustworthy, Efficient",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\06_case_study_how_we_saved__2m_in_year_one_f.jpg"
+    },
+    {
+      "id": 7,
+      "content_type": "testimonial",
+      "headline": "Finally, AI I Can Trust \u2013 With Measurable ROI",
+      "cta": "See More Testimonials",
+      "layout_strategy": "quote_centered",
+      "mood": "Trustworthy, sophisticated, modern",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\07_testimonial_finally__ai_i_can_trust___with.jpg"
+    },
+    {
+      "id": 8,
+      "content_type": "industry_insight",
+      "headline": "2025 Trend: Auditable AI \u2013 Why Transparent NLP Is the New Competitive Advantage",
+      "cta": "Read the Insight",
+      "layout_strategy": "educational",
+      "mood": "Clarity, precision, trust",
+      "file": "C:\\Users\\dops2\\Downloads\\test-project\\backend\\generated_images\\co_ventech_20260610_201620\\08_industry_insight_2025_trend__auditable_ai___why.jpg"
+    }
+  ]
+}

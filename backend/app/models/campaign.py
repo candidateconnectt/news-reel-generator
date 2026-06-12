@@ -34,11 +34,24 @@ class Campaign(Base):
     status = Column(String(50), nullable=False, default="pending", index=True)
     error_message = Column(Text, nullable=True)
 
+    # Campaign mode: "reel_video" (Pexels clips, default), "reel_image" (AI-generated scenes), "post" (single image)
+    campaign_type = Column(String(20), nullable=False, default="reel_video", index=True)
+
+    # Brand context for AI image generation (brand colors, style, tone, etc.)
+    brand_context = Column(JSON, nullable=True)
+
     # Populated when Make.com calls POST /campaigns/{id}/script
     title = Column(String(500), nullable=True)
     voiceover_full = Column(Text, nullable=True)
     script_json = Column(JSON, nullable=True)
     scenes_with_assets = Column(JSON, nullable=True)
+
+    # AI-generated image assets (post single image or reel scene images)
+    # Structure: [{"url": "...", "revised_prompt": "...", "scene_index": 0, "type": "post"|"reel"}, ...]
+    generated_images = Column(JSON, nullable=True)
+
+    # Image prompts used for generation (for audit/reuse)
+    image_prompts = Column(JSON, nullable=True)
 
     # Populated by the render worker
     video_path = Column(String(1000), nullable=True)

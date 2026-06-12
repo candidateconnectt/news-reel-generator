@@ -1,0 +1,8 @@
+headline: Trackin Now Covers 50 Cities
+supporting_text: We just expanded to 30 new cities across Pakistan
+cta: Explore Coverage
+brand_colors: ['#0057FF', '#FFFFFF', '#FF6B35']
+url: http://hailuo-image-algeng-data-us.oss-us-east-1.aliyuncs.com/image_inference_output%2Ftalkie%2Fprod%2Fimg%2F2026-06-10%2F98d780fc-d61c-43e2-af66-b7d83b0fd086_aigc.jpeg?Expires=1781174401&OSSAccessKeyId=LTAI5tRDTcyEYLLuBEpJRwCi&Signature=rrLIzlnxgBV4KwWhjE6Z%2F7XDe7Q%3D
+provider: minimax
+content_type: announcement
+visual_bible_mood: Professional and Trustworthy

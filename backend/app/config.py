@@ -11,11 +11,26 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Database
-    database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/reels"
+    # Database — uses Supabase direct connection when DATABASE_URL is set in .env
+    # Falls back to SQLite only if .env has no DATABASE_URL at all
+    database_url: str = ""
 
     # Google Gemini
     gemini_api_key: str = ""
+    gemini_api_key2: str = ""
+
+    # MiniMax
+    minimax_api_key: str = ""
+
+    # DeepSeek
+    deepseek_api_key: str = ""
+
+    # Ideogram
+    ideogram_api_key: str = ""
+
+    # OpenAI
+    openai_api_key: str = ""
+    openai_api_key2: str = ""
 
     # Pexels
     pexels_api_key: str = ""
@@ -24,6 +39,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
     supabase_bucket: str = "reels"
+    supabase_database_password: str = ""
 
     # Make.com
     make_com_webhook_url: str = ""
@@ -43,7 +59,12 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        origins = []
+        for raw in self.cors_origins.split(","):
+            o = raw.strip().rstrip("/")
+            if o:
+                origins.append(o)
+        return origins
 
 
 settings = Settings()

@@ -1,0 +1,33 @@
+{
+  "name": "08_general",
+  "content_type": "general",
+  "topic": "Real-time bus tracking — never miss your bus again",
+  "headline": "Real-Time Bus Tracking",
+  "supporting_text": "Know exactly when your bus arrives",
+  "cta": "Download App",
+  "image_provider": "Gemini (Primary Key)",
+  "brief": {
+    "objective": "Position Trackin as the essential real-time bus tracking app that eliminates wait-time uncertainty and empowers commuters to plan their day around transit.",
+    "audience": "Urban commuters aged 18–45 who use public transit daily, value reliability, and expect seamless digital experiences.",
+    "marketing_angle": "Focus on the emotional relief of knowing exactly when your bus arrives, turning unpredictable transit into a predictable, stress-free part of your routine.",
+    "key_message": "Never waste a minute wondering where your bus is — Trackin gives you live, accurate arrival times so you can take control of your commute.",
+    "tone": "Professional yet approachable, confident in data accuracy without being overly technical, and directly addressing commuter pain points.",
+    "visual_direction": "Clean, modern UI with vibrant amber or electric blue accents against a light background, featuring dynamic map interfaces and simple, bold typography that highlights countdowns and route clarity."
+  },
+  "bible": {
+    "mood": "Confident, clear, and empowering — a feeling of control and reliability, with a human touch that reassures commuters.",
+    "color_palette": [
+      "#0057FF",
+      "#FF6B35",
+      "#FFFFFF",
+      "#E5F0FF",
+      "#1A1A2E"
+    ],
+    "typography": "Inter: headings 48px Extra Bold (light bg) or 40px Bold (dark sections), body 16px Regular with 1.5 line-height, buttons 14px Semi-Bold, countdowns 56px Extra Bold in primary color.",
+    "composition": "Clean, left-aligned layouts with generous negative space, placing key data (like countdowns or route maps) in the upper-left focal zone. Secondary info aligns to bottom or right. Use soft diagonals or slight perspective to imply movement.",
+    "lighting": "Soft, even illumination with a warm amber glow from the accent color highlighting key elements (e.g., bus location). No harsh shadows; slight gradient fade on primary elements for depth.",
+    "texture": "Smooth, almost flat with very subtle grain (0.5% noise) to mimic high-end digital motion. Buttons and cards have a gentle 1px white border for definition.",
+    "background_description": "A dynamic abstract scene: layered blue gradient waves against a pale cyan base, with thin white grid lines suggesting a digital map. In the top left, a soft amber light source (like sunrise) casts a subtle glow, while the lower right has a faint, blurred silhouette of a modern city skyline under a clear sky."
+  },
+  "background_prompt": "Dynamic abstract scene, layered blue gradient waves on a pale cyan base, thin white grid lines resembling a digital map, soft amber light source in the top left casting a warm glow like sunrise, faint blurred silhouette of a modern city skyline in lower right under a clear sky, smooth flat texture with subtle grain, gentle 1px white borders on card-like elements, soft diagonals implying movement, generous negative space in upper-left focal zone, clean composition leaving lower-center clear for text, modern SaaS aesthetics, photorealistic digital art, colors #0057FF, #FF6B35, #FFFFFF, #E5F0FF, #1A1A2E"
+}

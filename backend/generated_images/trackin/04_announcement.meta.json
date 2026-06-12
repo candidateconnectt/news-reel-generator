@@ -1,0 +1,7 @@
+{
+  "name": "04_announcement",
+  "content_type": "announcement",
+  "layout_strategy": "stats_dense",
+  "mood": "confident and dynamic celebration",
+  "background_prompt": "A deep navy blue (#1A1A2E) gradient background, softly transitioning from dark at the edges to a luminous, darker core. Behind the central zone, a subtle radial glow in a lighter navy hints at energy. A thin, sharp horizontal accent line in vibrant blue (#0057FF) cuts across the upper third, clean and precise. Near the top-right corner, a tiny, subtle burst of warm orange (#FF6B35) appears as a delicate energy fleck, like a spark of celebration. The scene is clean, minimal, high-contrast, with generous negative space reserved for bold headline text. Cinematic, professional lighting."
+}

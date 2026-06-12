@@ -7,10 +7,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        bg: "var(--bg)",
+        surface: "var(--bg-surface)",
+        elevated: "var(--bg-elevated)",
+        border: "var(--border)",
+        text: "var(--text)",
+        muted: "var(--text-muted)",
+        dim: "var(--text-dim)",
         brand: {
-          DEFAULT: "#e10600",
-          dark: "#a30400",
+          DEFAULT: "var(--brand)",
+          hover: "var(--brand-hover)",
+          dim: "var(--brand-dim)",
         },
+        success: "var(--success)",
+        warning: "var(--warning)",
+        danger: "var(--danger)",
+        info: "var(--info)",
+        idle: "var(--idle)",
+      },
+      fontFamily: {
+        sans: "var(--font-sans)",
+        mono: "var(--font-mono)",
+        display: "var(--font-display)",
       },
     },
   },

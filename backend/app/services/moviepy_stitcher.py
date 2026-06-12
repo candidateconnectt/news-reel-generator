@@ -192,70 +192,84 @@ async def create_normalized_video_chunk(
 ) -> str:
     """
     Create a NORMALIZED video chunk with CFR, exact duration, and reset timestamps.
+    Fixed for Railway's ffmpeg - uses -stream_loop instead of loop filter.
     """
     output_path = os.path.join(work_dir, f"chunk_{idx:03d}.mp4")
     cap_overlay_y = TARGET_H - CAPTION_HEIGHT - CAPTION_BOTTOM_MARGIN
     
-    # First, get the actual duration of the source clip
+    # Get actual duration of source clip
     clip_duration = await get_video_duration(clip_path)
     
-    # Build the filter chain
-    filters = []
+    # Scale and crop filter (common for both cases)
+    scale_crop = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H}"
     
-    # Step 1: Scale and crop to target dimensions
-    filters.append(
-        f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
-        f"crop={TARGET_W}:{TARGET_H}"
-    )
-    
-    # Step 2: Handle duration mismatch
     if target_duration > clip_duration:
-        # Loop the clip to reach target duration
+        # Need to loop the clip - use -stream_loop input option
         loops_needed = int(target_duration / clip_duration) + 1
-        filters.append(f"loop=loop={loops_needed}:size={int(clip_duration * TARGET_FPS)}")
-    
-    # Step 3: Trim to exact duration
-    filters.append(f"trim=duration={target_duration}")
-    
-    # Step 4: Force constant frame rate
-    filters.append(f"fps={TARGET_FPS}")
-    
-    # Step 5: Reset timestamps to zero
-    filters.append("setpts=PTS-STARTPTS")
-    
-    # Step 6: Format for video
-    filters.append("format=yuv420p")
-    
-    video_filter = ",".join(filters)
-    
-    # Build FFmpeg command with caption overlay
-    if caption_path and os.path.exists(caption_path):
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", clip_path,
-            "-i", caption_path,
-            "-filter_complex",
-            f"[0:v]{video_filter}[v];"
-            f"[1:v]format=yuva420p[cap];"
-            f"[v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
-            "-map", "[out]",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-video_track_timescale", str(TARGET_FPS),
-            "-r", str(TARGET_FPS),
-            "-vsync", "cfr",
-            output_path,
-        ]
+        
+        # Build filter chain after looping
+        post_filters = f"trim=duration={target_duration},setpts=PTS-STARTPTS,{scale_crop},fps={TARGET_FPS},format=yuv420p"
+        
+        if caption_path and os.path.exists(caption_path):
+            cmd = [
+                "ffmpeg", "-y",
+                "-stream_loop", str(loops_needed),
+                "-i", clip_path,
+                "-i", caption_path,
+                "-filter_complex",
+                f"[0:v]{post_filters}[v];"
+                f"[1:v]format=yuva420p[cap];"
+                f"[v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
+                "-map", "[out]",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-video_track_timescale", str(TARGET_FPS),
+                "-r", str(TARGET_FPS),
+                "-vsync", "cfr",
+                output_path,
+            ]
+        else:
+            cmd = [
+                "ffmpeg", "-y",
+                "-stream_loop", str(loops_needed),
+                "-i", clip_path,
+                "-vf", post_filters,
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-video_track_timescale", str(TARGET_FPS),
+                "-r", str(TARGET_FPS),
+                "-vsync", "cfr",
+                output_path,
+            ]
     else:
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", clip_path,
-            "-vf", video_filter,
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-            "-video_track_timescale", str(TARGET_FPS),
-            "-r", str(TARGET_FPS),
-            "-vsync", "cfr",
-            output_path,
-        ]
+        # Clip is long enough, just trim
+        post_filters = f"trim=duration={target_duration},setpts=PTS-STARTPTS,{scale_crop},fps={TARGET_FPS},format=yuv420p"
+        
+        if caption_path and os.path.exists(caption_path):
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", clip_path,
+                "-i", caption_path,
+                "-filter_complex",
+                f"[0:v]{post_filters}[v];"
+                f"[1:v]format=yuva420p[cap];"
+                f"[v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
+                "-map", "[out]",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-video_track_timescale", str(TARGET_FPS),
+                "-r", str(TARGET_FPS),
+                "-vsync", "cfr",
+                output_path,
+            ]
+        else:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", clip_path,
+                "-vf", post_filters,
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-video_track_timescale", str(TARGET_FPS),
+                "-r", str(TARGET_FPS),
+                "-vsync", "cfr",
+                output_path,
+            ]
     
     logger.info(f"Running FFmpeg for scene {idx} with target duration {target_duration:.2f}s")
     
@@ -267,7 +281,7 @@ async def create_normalized_video_chunk(
     _, stderr = await proc.communicate()
     
     if proc.returncode != 0:
-        logger.error(f"Chunk creation for scene {idx} failed: {stderr.decode()[-500:]}")
+        logger.error(f"Chunk creation for scene {idx} failed: {stderr.decode()[-800:]}")
         raise RuntimeError(f"FFmpeg chunk creation failed for scene {idx}")
     
     # Verify the output duration
@@ -279,7 +293,6 @@ async def create_normalized_video_chunk(
         raise RuntimeError(f"Output file not created for scene {idx}")
     
     return output_path
-
 
 async def extract_audio_segment(
     voiceover_path: str,

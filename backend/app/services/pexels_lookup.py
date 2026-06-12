@@ -59,10 +59,24 @@ def search_vertical_clip(query: str, timeout: float = 10.0) -> str | None:
         ]
         if not vertical_files:
             continue
-        # Pick the highest-resolution vertical file
-        best = max(
-            vertical_files,
-            key=lambda f: f.get("width", 0) * f.get("height", 0),
+        # Pick the file closest to 1080x1920 (or 720x1280 as fallback).
+        # The old logic picked the HIGHEST resolution (always 4K), which
+        # downloaded 2160x3840 4K assets and OOM'd the 1GB Railway
+        # container during ffmpeg decode. Picking the resolution closest
+        # to our render target (~1080x1920) keeps memory pressure minimal
+        # while still preserving enough detail for a vertical reel.
+        def _score(f: dict[str, Any]) -> int:
+            w = f.get("width", 0)
+            h = f.get("height", 0)
+            return abs(w - 1080) + abs(h - 1920)
+        best = min(vertical_files, key=_score)
+        logger.info(
+            "Pexels pick for '%s': %dx%d (%d fps, %dkbps)",
+            query,
+            best.get("width", 0),
+            best.get("height", 0),
+            best.get("fps", 0) or 0,
+            (best.get("bitrate") or 0) // 1024,
         )
         return best.get("link")
 

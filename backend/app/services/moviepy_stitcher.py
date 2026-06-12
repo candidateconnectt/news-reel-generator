@@ -223,7 +223,7 @@ async def extract_audio_segment(
         _FFMPEG_PATH = find_ffmpeg()
     
     cmd = [
-        _FFMPEG_PATH, "-y",
+        _FFMPEG_PATH, "-y", "-threads", "1",
         "-ss", str(start_time),
         "-t", str(duration),
         "-i", voiceover_path,
@@ -275,8 +275,9 @@ async def create_normalized_video_chunk(
     # handle because pad can only add bars, never crop).
     scaled_video = os.path.join(work_dir, f"scaled_{idx:03d}.mp4")
     scale_cmd = [
-        _FFMPEG_PATH, "-y", "-i", clip_path,
+        _FFMPEG_PATH, "-y", "-threads", "1", "-i", clip_path,
         "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease",
+        "-r", "30",  # force 30fps: some Pexels clips are 60fps which doubles memory pressure
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-an", scaled_video,
     ]
@@ -295,8 +296,9 @@ async def create_normalized_video_chunk(
     # Step 2: Pad to exact dimensions (add black bars)
     padded_video = os.path.join(work_dir, f"padded_{idx:03d}.mp4")
     pad_cmd = [
-        _FFMPEG_PATH, "-y", "-i", scaled_video,
+        _FFMPEG_PATH, "-y", "-threads", "1", "-i", scaled_video,
         "-vf", "pad=1080:1920:(ow-iw)/2:(oh-ih)/2",
+        "-r", "30",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-an", padded_video,
     ]
@@ -313,7 +315,7 @@ async def create_normalized_video_chunk(
     # Step 3: Trim to exact duration
     trimmed_video = os.path.join(work_dir, f"trimmed_{idx:03d}.mp4")
     trim_cmd = [
-        _FFMPEG_PATH, "-y", "-i", padded_video,
+        _FFMPEG_PATH, "-y", "-threads", "1", "-i", padded_video,
         "-t", str(target_duration), "-c:v", "copy", trimmed_video,
     ]
     logger.info(f"Scene {idx}: trim cmd = {' '.join(trim_cmd)}")
@@ -330,9 +332,10 @@ async def create_normalized_video_chunk(
     if caption_path and os.path.exists(caption_path):
         final_video = os.path.join(work_dir, f"final_{idx:03d}.mp4")
         overlay_cmd = [
-            _FFMPEG_PATH, "-y",
+            _FFMPEG_PATH, "-y", "-threads", "1",
             "-i", trimmed_video, "-i", caption_path,
             "-filter_complex", f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y}",
+            "-r", "30",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             final_video,
         ]
@@ -387,7 +390,7 @@ async def create_normalized_image_chunk(
     
     temp_video = os.path.join(work_dir, f"temp_image_{idx:03d}.mp4")
     cmd_video = [
-        _FFMPEG_PATH, "-y", "-loop", "1", "-i", img_path,
+        _FFMPEG_PATH, "-y", "-threads", "1", "-loop", "1", "-i", img_path,
         "-vf", f"{zoompan_filter},format=yuv420p",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
         "-video_track_timescale", str(TARGET_FPS),
@@ -402,7 +405,7 @@ async def create_normalized_image_chunk(
     
     if caption_path and os.path.exists(caption_path):
         cmd_overlay = [
-            _FFMPEG_PATH, "-y",
+            _FFMPEG_PATH, "-y", "-threads", "1",
             "-i", temp_video, "-i", caption_path,
             "-filter_complex", f"[1:v]format=yuva420p[cap];[0:v][cap]overlay=0:{cap_overlay_y},format=yuv420p[out]",
             "-map", "[out]",
@@ -496,7 +499,7 @@ async def stitch_reel_async(
             f.write(f"file '{chunk}'\n")
     
     combined_video = os.path.join(chunks_dir, "combined_video.mp4")
-    cmd_concat = [_FFMPEG_PATH, "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_video]
+    cmd_concat = [_FFMPEG_PATH, "-y", "-threads", "1", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_video]
     proc = await asyncio.create_subprocess_exec(*cmd_concat, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
@@ -510,7 +513,7 @@ async def stitch_reel_async(
             f.write(f"file '{audio}'\n")
     
     combined_audio = os.path.join(chunks_dir, "combined_audio.m4a")
-    cmd_concat = [_FFMPEG_PATH, "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_audio]
+    cmd_concat = [_FFMPEG_PATH, "-y", "-threads", "1", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_audio]
     proc = await asyncio.create_subprocess_exec(*cmd_concat, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
@@ -518,7 +521,7 @@ async def stitch_reel_async(
         raise RuntimeError("Audio concatenation failed")
     
     # Mux
-    cmd_mux = [_FFMPEG_PATH, "-y", "-i", combined_video, "-i", combined_audio, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", output_path]
+    cmd_mux = [_FFMPEG_PATH, "-y", "-threads", "1", "-i", combined_video, "-i", combined_audio, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", output_path]
     proc = await asyncio.create_subprocess_exec(*cmd_mux, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
@@ -607,7 +610,7 @@ async def stitch_images_async(
             f.write(f"file '{chunk}'\n")
     
     combined_video = os.path.join(chunks_dir, "combined_video.mp4")
-    cmd_concat = [_FFMPEG_PATH, "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_video]
+    cmd_concat = [_FFMPEG_PATH, "-y", "-threads", "1", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_video]
     proc = await asyncio.create_subprocess_exec(*cmd_concat, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
@@ -621,7 +624,7 @@ async def stitch_images_async(
             f.write(f"file '{audio}'\n")
     
     combined_audio = os.path.join(chunks_dir, "combined_audio.m4a")
-    cmd_concat = [_FFMPEG_PATH, "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_audio]
+    cmd_concat = [_FFMPEG_PATH, "-y", "-threads", "1", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", combined_audio]
     proc = await asyncio.create_subprocess_exec(*cmd_concat, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:
@@ -629,7 +632,7 @@ async def stitch_images_async(
         raise RuntimeError("Audio concatenation failed")
     
     # Mux
-    cmd_mux = [_FFMPEG_PATH, "-y", "-i", combined_video, "-i", combined_audio, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", output_path]
+    cmd_mux = [_FFMPEG_PATH, "-y", "-threads", "1", "-i", combined_video, "-i", combined_audio, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", output_path]
     proc = await asyncio.create_subprocess_exec(*cmd_mux, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
     if proc.returncode != 0:

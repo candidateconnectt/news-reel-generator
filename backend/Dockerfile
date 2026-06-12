@@ -5,26 +5,37 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install ffmpeg with ALL codecs - critical for Railway
+# Tools needed to download and extract the static ffmpeg tarball,
+# plus the fonts used by the PIL caption renderer in the stitcher.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        # These codec libraries are essential
-        libx264-dev \
-        libx265-dev \
-        libvpx-dev \
-        libmp3lame-dev \
-        libopus-dev \
-        libvorbis-dev \
-        libass-dev \
+        wget \
+        xz-utils \
+        ca-certificates \
         fonts-dejavu-core \
-        fonts-liberation \
-        curl \
- && apt-get clean \
+        bash \
  && rm -rf /var/lib/apt/lists/*
 
-# Verify ffmpeg has the required encoders
-RUN ffmpeg -encoders | grep -q libx264 && echo "✓ libx264 available" || echo "⚠️ libx264 missing"
+# Static ffmpeg build (johnvansickle.com) -- self-contained binary
+# with ALL codecs statically linked (libx264, libx265, libvpx,
+# libmp3lame, libopus, libvorbis, etc.). Sidesteps the Debian
+# slim image's stripped-down ffmpeg package entirely.
+ARG FFMPEG_VERSION=7.1
+ARG FFMPEG_URL=https://johnvansickle.com/ffmpeg/releases/ffmpeg-${FFMPEG_VERSION}-amd64-static.tar.xz
+RUN wget -q -O /tmp/ffmpeg.tar.xz "${FFMPEG_URL}" \
+ && tar -xJf /tmp/ffmpeg.tar.xz -C /tmp \
+ && mv /tmp/ffmpeg-${FFMPEG_VERSION}-amd64-static/ffmpeg  /usr/local/bin/ffmpeg \
+ && mv /tmp/ffmpeg-${FFMPEG_VERSION}-amd64-static/ffprobe /usr/local/bin/ffprobe \
+ && chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
+ && rm -rf /tmp/ffmpeg*
+
+# Sanity check: the build must include libx264, otherwise the
+# render worker's chunk creation will fail with "Unknown
+# encoder 'libx264'" and we'll find out at runtime.
+RUN ffmpeg -version >/dev/null \
+ && ffmpeg -encoders 2>/dev/null | grep -q 'libx264' \
+ && echo "[build] ffmpeg $(ffmpeg -version | head -n1) -- libx264 OK" \
+ || (echo "[build] ffmpeg missing libx264 encoder -- build broken" && exit 1)
 
 WORKDIR /app
 
@@ -33,10 +44,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Ensure ffmpeg/ffprobe are in PATH
-ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
-
 EXPOSE 8000
 
-# Use direct uvicorn command (simpler, fewer points of failure)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Bash so we can use $PORT with the :- default-value syntax
+# (Debian's /bin/sh is dash and doesn't support :-).
+CMD ["bash", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

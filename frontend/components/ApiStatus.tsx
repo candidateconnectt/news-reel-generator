@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://news-reel-generator-production.up.railway.app";
 
 type Status = "checking" | "online" | "offline";
 
